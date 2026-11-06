@@ -39,7 +39,7 @@ npm run dev
 
 Open the local URL printed in the terminal. `npm run build` type-checks and builds the project; `npm run preview` shows the built version locally.
 
-The selected gallery preserves its labelled internal scroll scene. At its edges, scrolling can continue into the page. Foreground artwork, middle artwork, backdrop and type move at different rates. Reduced-motion users receive a still composition. Real-phone performance has not yet been measured.
+The selected gallery uses one scroll surface. Foreground artwork, middle artwork, backdrop and type retain their original depth movement. Reduced-motion users receive a still composition. Real-phone performance has not yet been measured.
 
 The public source uses system fonts and original placeholder images. The compressed WebP placeholder images are embedded in `artwork.ts` and `artwork-extra.ts`; these are original demo assets, not third-party reference recordings. The source files sit together in the repository root. It contains no private inspiration recordings or project notes. No services or secret keys are required.
 
@@ -49,6 +49,6 @@ Collection navigation, physical/digital filtering, artwork detail previews, full
 
 ## Motion continuation
 
-After the layered hero, a three-artwork spread unfolds into view, followed by staggered collection reveals and a quiet crop-to-full-image feature transition. The upper scene follows its own scroll, while the following artwork spread uses native visibility observation to follow page scroll in both directions. They use transform/opacity changes, with no new animation dependency or continuous render loop. Reduced-motion users get a still composition.
+The upper depth sequence completes on a pinned track, then its foreground moves upward to reveal the lower scene already underneath. The lower three-artwork spread remains scroll-linked and reversible, followed by collection reveals and the crop-to-full-image feature transition.
 
-The seam between the upper scene and lower spread now has a shared paper-texture transition: three foreground planes travel at different rates and clear away with scroll. Both existing scene effects remain.
+The earlier separate decorative paper strip has been removed. One scroll surface drives the upper sequence, the connecting handoff and the lower spread directly, without competing transition timers or extra animation dependencies. Reduced-motion preference presents both scenes as static content. This is still a visual prototype, not a physical-device performance guarantee.
