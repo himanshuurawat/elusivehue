@@ -64,30 +64,51 @@ function DepthScene({ pageFlow = false }: { pageFlow?: boolean }) {
 
 function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onClose: () => void}) {
     const dialog = React.useRef<HTMLDialogElement>(null);
-    const [detail, setDetail] = useState(false);
+    const [view,setView] = useState('Full artwork');
+    const [finish,setFinish] = useState(0);
+    const [tilt,setTilt] = useState(0);
+    const drag = React.useRef<{x:number;angle:number}|null>(null);
+    const finishes = [{name:'Bare',tone:'#191919',edge:'transparent'},{name:'Oak',tone:'#302921',edge:'#a1815e'},{name:'Ink',tone:'#172024',edge:'#101518'}];
     React.useEffect(() => {
-        setDetail(false);
-        if (work && !dialog.current?.open) dialog.current?.showModal();
+        setView('Full artwork');setFinish(0);setTilt(0);
+        if (work && !dialog.current?.open) {
+            dialog.current?.showModal();
+            dialog.current?.querySelector<HTMLButtonElement>('.product-close')?.focus({preventScroll:true});
+            if(dialog.current) dialog.current.scrollTop=0;
+        }
         if (!work && dialog.current?.open) dialog.current.close();
     }, [work]);
-    return <dialog ref={dialog} className="art-dialog" onKeyDown={e => {
+    const angle = view === 'Detail crop' ? 0 : tilt + (view === 'Angled view' ? -22 : 0);
+    return <dialog ref={dialog} className="art-dialog product-dialog" aria-label={work ? `${work.title} artwork view` : 'Artwork view'} onKeyDown={e => {
         if(e.key !== 'Tab') return;
         const buttons = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('button:not([disabled])'));
         const first = buttons[0], last = buttons[buttons.length - 1];
         if(e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
         if(!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
-    }} onClose={onClose} onClick={e => {if(e.target === e.currentTarget) onClose();}}>
-        {work && <div className="art-detail">
-            <button type="button" className="detail-close" aria-label="Close artwork preview" onClick={onClose}>Close ×</button>
-            <div className={`detail-image${detail ? ' cropped' : ''}`}><img src={work.img} alt={`${work.title}, illustrative artwork`} /></div>
-            <div className="detail-info">
-                <p className="kicker">Artwork preview / dummy content</p>
-                <h2 className="display">{work.title}</h2>
-                <p className="detail-artist">{work.artist}</p>
-                <div className="detail-facts"><span>{work.kind}</span><span>{work.price}</span></div>
-                <p className="detail-note">Illustrative artwork, artist, medium and price. This is a frontend preview, not a listing or an offer.</p>
-                <div className="image-controls" aria-label="Artwork view"><button type="button" aria-pressed={!detail} onClick={() => setDetail(false)}>Full artwork</button><button type="button" aria-pressed={detail} onClick={() => setDetail(true)}>Detail crop</button></div>
-                <p className="meta">{detail ? 'An enlarged crop of the same dummy image.' : 'The complete image, with its original proportions.'}</p>
+    }} onClose={onClose}>
+        {work && <div className="product-world" style={{'--product-tone':finishes[finish].tone,'--frame-tone':finishes[finish].edge} as React.CSSProperties}>
+            <div className="product-top"><span className="kicker">Elusive Hue / The viewing room</span><button type="button" className="product-close" aria-label="Close artwork preview" onClick={onClose}>Close ×</button></div>
+            <div className="product-layout">
+                <div className={`product-stage${view === 'Detail crop' ? ' is-detail' : ''}`}>
+                    <span className="product-word" aria-hidden="true">{work.title.split(' ')[0]}</span>
+                    <span className="product-callout callout-left"><small>01 / Medium</small>{work.kind.split(' · ').pop()}</span>
+                    <div className="product-object" style={{'--angle':`${angle}deg`,'--zoom':view === 'Detail crop' ? '1.75' : '1'} as React.CSSProperties}
+                        onPointerDown={e=>{if(e.button!==0 || view==='Detail crop')return;drag.current={x:e.clientX,angle:tilt};e.currentTarget.setPointerCapture(e.pointerId);}}
+                        onPointerMove={e=>{if(drag.current)setTilt(Math.max(-28,Math.min(28,drag.current.angle+(e.clientX-drag.current.x)*.18)));}}
+                        onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}>
+                        <div className={`product-frame finish-${finish}`}><img src={work.img} alt={`${work.title}, illustrative artwork`} draggable={false} /></div>
+                    </div>
+                    <span className="product-callout callout-right"><small>02 / Artist</small>{work.artist}</span>
+                    <span className="product-ground" aria-hidden="true" />
+                    <p className="product-hint">{view === 'Detail crop' ? 'A closer look at the image.' : 'Drag sideways to change perspective.'}</p>
+                </div>
+                <div className="product-info">
+                    <p className="kicker">Illustrative collection</p><h2 className="display">{work.title}</h2><p className="product-by">By {work.artist}</p>
+                    <div className="product-price"><span>{work.kind.split(' · ')[0]}</span><strong>{work.price}</strong></div>
+                    <div className="product-control"><span className="product-label">View</span><div className="product-buttons" aria-label="Artwork view">{['Full artwork','Angled view','Detail crop'].map(v=><button type="button" key={v} aria-pressed={view===v} onClick={()=>{setView(v);setTilt(0);}}>{v}</button>)}</div></div>
+                    <div className="product-control"><span className="product-label">Display study <small>Not purchase options</small></span><div className="product-finishes" aria-label="Display frame">{finishes.map((v,i)=><button type="button" key={v.name} aria-pressed={finish===i} onClick={()=>setFinish(i)}><span style={{background:i===0?'#666':v.edge}} />{v.name}</button>)}</div></div>
+                    <p className="product-disclaimer">A perspective study of a flat image, not a 3D scan. Frames are visual mockups. Artwork, artist, medium and price are dummy content. Nothing is for sale here.</p>
+                </div>
             </div>
         </div>}
     </dialog>;
