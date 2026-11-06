@@ -521,3 +521,20 @@ body { background: #0a0909; }
 .feature-image.is-seen img { transform:scale(1); }
 @media(min-width:768px) { .gallery-continuation { padding-top:95px; } .continuation-copy { padding-left:5%; } .unfold-scene { height:600px; margin-top:-75px; } .unfold-piece { top:125px; width:25%; left:37.5%; } .unfold-left { transform:translate3d(calc(var(--unfold) * -120%),calc(32px - var(--unfold) * 25px),0) rotate(calc(-4deg - var(--unfold) * 11deg)); } .unfold-right { transform:translate3d(calc(var(--unfold) * 120%),calc(35px - var(--unfold) * 20px),0) rotate(calc(9deg + var(--unfold) * 7deg)); } .unfold-piece figcaption { font-size:10px; } .unfold-orbit { top:20%; height:70%; } }
 @media(prefers-reduced-motion:reduce) { .scroll-reveal.motion-ready,.art-open.motion-ready { opacity:1; transform:none; transition:none; } .unfold-scene.motion-ready { --unfold:1!important; } .unfold-piece,.unfold-orbit,.unfold-line,.feature-image.motion-ready img { transition:none; } .feature-image.motion-ready img { transform:none; } }
+/* One page scroll, without the former nested-scroll handoff. */
+.page-depth { overflow:hidden; overscroll-behavior:auto; }
+.page-depth .depth-track { height:100%; }
+.page-depth .depth-scene { position:relative; }
+.page-depth .depth-bg,.page-depth .depth-halo,.page-depth .depth-title,.page-depth .depth-mid,.page-depth .depth-front,.page-depth .depth-outro { transition:transform .12s linear,opacity .12s linear; }
+.page-depth .depth-outro { bottom:22px; font-size:32px; }
+.gallery-continuation { margin-top:0; padding-top:15px; }
+.unfold-scene { --drift:0; margin-top:-20px; }
+.unfold-left { transform:translate3d(calc(var(--unfold) * -67%),calc(32px - var(--unfold) * 30px - var(--drift) * 100px),0) rotate(calc(-4deg - var(--unfold) * 11deg - var(--drift) * 8deg)); }
+.unfold-center { transform:translate3d(0,calc(45px - var(--unfold) * 45px - var(--drift) * 55px),0) rotate(calc(6deg - var(--unfold) * 6deg + var(--drift) * 5deg)); }
+.unfold-right { transform:translate3d(calc(var(--unfold) * 68%),calc(35px - var(--unfold) * 20px - var(--drift) * 135px),0) rotate(calc(9deg + var(--unfold) * 7deg + var(--drift) * 9deg)); }
+.unfold-piece,.unfold-orbit,.unfold-line { transition:transform .12s linear,opacity .12s linear; }
+.continuation-end { padding-top:12px; }
+@media(min-width:768px) { .gallery-continuation { padding-top:45px; } .unfold-scene { margin-top:-75px; } .unfold-left { transform:translate3d(calc(var(--unfold) * -120%),calc(32px - var(--unfold) * 25px - var(--drift) * 110px),0) rotate(calc(-4deg - var(--unfold) * 11deg - var(--drift) * 8deg)); } .unfold-right { transform:translate3d(calc(var(--unfold) * 120%),calc(35px - var(--unfold) * 20px - var(--drift) * 145px),0) rotate(calc(9deg + var(--unfold) * 7deg + var(--drift) * 9deg)); } .page-depth .depth-outro { font-size:45px; } }
+@media(prefers-reduced-motion:reduce) { .page-depth .depth-bg,.page-depth .depth-halo,.page-depth .depth-title,.page-depth .depth-mid,.page-depth .depth-front,.page-depth .depth-outro,.unfold-piece,.unfold-orbit,.unfold-line { transition:none; } .unfold-scene.motion-ready { --drift:0!important; } }
+
+.page-depth .depth-hint { opacity:calc(1 - var(--depth) * 5); }
