@@ -1,7 +1,5 @@
 html, body, #root { margin: 0; min-height: 100%; }
 body { background: #0a0909; }
-html, body, #root { margin: 0; min-height: 100%; }
-body { background: #0a0909; }
 
 :root {
     --ds-page: #0a0909;
@@ -444,5 +442,57 @@ body { background: #0a0909; }
 .depth-outro small { display: block; font: 10px var(--text); color: #bcb5ac; margin-top: 15px; }
 @media(min-width:768px) { .depth-scroll,.depth-scene { height: 640px; } .depth-track { height: 1260px; } .depth-title { left: 50px; top: 55px; } .depth-title h2 { font-size: 78px; } .depth-title .kicker { font-size: 10px; } .depth-mid { width: 26%; left: 32%; top: 210px; } .depth-front { width: 30%; right: 3%; top: 180px; } .depth-halo { width: 500px; height: 500px; left: 30%; } .depth-outro { left: 50px; font-size: 65px; } .depth-hint { left: 50px; } }
 @media(prefers-reduced-motion:reduce) { .depth-bg,.depth-halo,.depth-title,.depth-mid,.depth-front,.depth-outro { transform: none !important; } .depth-outro { display: none; } }
+/* Selected Midnight Gallery frontend */
+.chosen-nav { width: min(96%,620px); gap: 6px; padding: 6px 10px; }
+.chosen-nav button { border:0; background:transparent; color:var(--ink2); font:11px var(--text); min-height:44px; padding:0 6px; cursor:pointer; }
+.chosen-nav .brand-button { color:var(--ink); margin-right:auto; padding-left:2px; }
+.chosen-nav .wordmark { font-size:13px; letter-spacing:.08em; }
+.chosen-nav button:hover { color:var(--ink); }
+.chosen-gallery :is(#collection,#secondhand,#gallery-top) { scroll-margin-top:95px; }
+.chosen-gallery button:focus-visible,.chosen-gallery summary:focus-visible { outline:2px solid var(--ink); outline-offset:4px; }
+.text-link { background:none; border:0; padding:10px 0; color:var(--ink); font:12px var(--text); text-align:left; cursor:pointer; min-height:44px; }
+.chosen-gallery .cap { align-items:center; gap:15px; }
+.collection-filter { display:flex; flex-wrap:wrap; gap:8px; margin:25px 0 30px; }
+.collection-filter button,.image-controls button { min-height:44px; padding:10px 16px; background:transparent; border:1px solid var(--line); border-radius:30px; color:var(--ink2); font:12px var(--text); cursor:pointer; }
+.collection-filter button[aria-pressed=true],.image-controls button[aria-pressed=true] { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.art-open { background:none; border:0; padding:0; color:var(--ink); text-align:left; font:inherit; cursor:pointer; min-width:0; }
+.art-open .ph { position:relative; }
+.art-open-label { position:absolute; bottom:10px; right:10px; border-radius:20px; padding:9px 11px; background:#111d; color:#eee; font:10px var(--text); opacity:0; transform:translateY(5px); transition:opacity .25s,transform .25s; }
+.art-open:hover .art-open-label,.art-open:focus-visible .art-open-label { opacity:1; transform:none; }
+.art-open .a { line-height:1.7; }
+.chosen-gallery .g-works { align-items:start; }
+.chosen-gallery .g-works img { transition:transform .65s cubic-bezier(.2,.7,.2,1); }
+.chosen-gallery .g-feature .feature-image { overflow:hidden; }
+.chosen-gallery .g-feature img { width:100%; height:auto; display:block; }
+.gallery-cta { border:1px solid var(--line); background:none; color:var(--ink); border-radius:30px; padding:13px 18px; min-height:44px; cursor:pointer; font:12px var(--text); margin-top:20px; }
+.project-note { max-width:760px; }
+.project-note h2 { font-size:clamp(38px,7vw,65px); }
+.project-note > p:not(.kicker) { color:var(--ink2); line-height:1.85; max-width:52ch; }
+.project-note details { margin-top:30px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:6px 0; color:var(--ink2); font:13px/1.8 var(--text); }
+.project-note summary { padding:14px 0; cursor:pointer; color:var(--ink); min-height:44px; }
+.chosen-gallery .g-foot { gap:24px; }
+.art-dialog { border:1px solid #393531; padding:0; width:min(94vw,1040px); max-width:none; max-height:88dvh; color:#f1eee8; background:#141312; overflow:auto; overscroll-behavior:contain; box-shadow:0 20px 100px #0008; }
+.art-dialog::backdrop { background:rgba(0,0,0,.84); }
+.art-detail { position:relative; display:grid; }
+.detail-close { position:sticky; top:10px; justify-self:end; z-index:3; margin:10px 10px -52px 0; border:1px solid #666; border-radius:28px; background:#181716; color:#eee; padding:10px 16px; min-height:44px; cursor:pointer; font:12px var(--text); }
+.detail-image { height:380px; overflow:hidden; background:#22201d; padding:35px 20px; display:flex; align-items:center; justify-content:center; }
+.detail-image img { width:100%; height:100%; object-fit:contain; transition:transform .6s cubic-bezier(.2,.7,.2,1); }
+.detail-image.cropped img { transform:scale(1.8); }
+.detail-info { padding:28px 22px 32px; }
+.detail-info h2 { font-size:38px; line-height:1.05; margin:16px 0 10px; }
+.detail-artist { font:14px var(--text); color:#c5beb7; }
+.detail-facts { border-top:1px solid #393531; border-bottom:1px solid #393531; display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:18px 0; margin:25px 0; font:12px/1.8 var(--text); }
+.detail-note { font:12px/1.8 var(--text); color:#aaa39b; }
+.image-controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:25px; --ink:#f1eee8; --bg:#141312; --ink2:#b6aea6; --line:#625a52; }
+.art-dialog .meta { font:11px/1.8 var(--text); color:#b6aea6; margin-top:16px; }
+.art-dialog button:focus-visible { outline:2px solid white; outline-offset:3px; }
+@media(hover:none) { .art-open-label { opacity:1; transform:none; } }
+@media(min-width:768px) { .chosen-nav .wordmark{font-size:15px} .chosen-nav button{font-size:12px;padding:0 12px} .art-detail{grid-template-columns:1.1fr 1fr;min-height:600px} .detail-close{position:absolute;right:12px;top:12px;margin:0} .detail-image{height:600px;padding:55px 30px} .detail-info{padding:75px 38px 35px;align-self:center} .detail-info h2{font-size:46px} }
+@media(prefers-reduced-motion:reduce) { .detail-image img,.art-open-label,.chosen-gallery .g-works img{transition:none} }
+.chosen-gallery h2.display { line-height:1.04; }
+.chosen-gallery .head { flex-wrap:wrap; align-items:flex-end; }
+.chosen-gallery .head > .meta { display:block; line-height:1.7; }
+.project-note > .kicker { margin-bottom:20px; }
+.project-note > p:not(.kicker) { margin-top:24px; }
 
-:root { --display: Georgia, serif; --text: Arial, sans-serif; }
+:root{--display:Georgia,serif;--text:Arial,sans-serif;}
