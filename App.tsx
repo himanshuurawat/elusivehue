@@ -110,43 +110,44 @@ function GalleryContinuation() {
 function useGalleryMotion(root: React.RefObject<HTMLDivElement | null>, changing: string) {
     React.useEffect(() => {
         const el = root.current;
-        if(!el || !('IntersectionObserver' in window)) return;
+        if(!el) return;
         const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const observer = new IntersectionObserver(entries => {
-            for(const entry of entries) {
-                const target = entry.target as HTMLElement;
-                if(target.hasAttribute('data-handoff') || target.hasAttribute('data-page-depth') || target.hasAttribute('data-unfold')) {
-                    if(!entry.isIntersecting) continue;
-                    const height = entry.boundingClientRect.height;
-                    const passed = Math.max(0, entry.intersectionRect.top - entry.boundingClientRect.top) / height;
-                    if(target.hasAttribute('data-handoff')) {
-                        const visible = entry.intersectionRect.height / height;
-                        const p = passed > .01 ? Math.min(1, .45 + passed * .55) : Math.max(0, Math.min(.45, visible * .45));
-                        target.style.setProperty('--handoff', String(p));
-                    } else if(target.hasAttribute('data-page-depth')) {
-                        target.style.setProperty('--depth', String(Math.min(1, passed * 1.7)));
-                    } else {
-                        const visible = Math.min(1, entry.intersectionRect.height / height);
-                        const p = passed > .01 ? 1 : Math.max(0, Math.min(1, (visible - .35) / .6));
-                        target.style.setProperty('--unfold', String(p));
-                        target.style.setProperty('--drift', String(passed));
-                        target.dataset.progress = p.toFixed(3);
-                    }
-                } else if(entry.isIntersecting && entry.intersectionRatio > .08) {
-                    target.classList.add('is-seen');
-                    observer.unobserve(target);
-                }
+        const targets = [...el.querySelectorAll<HTMLElement>('.scroll-reveal, .art-open, .feature-image')];
+        const depth = el.querySelector<HTMLElement>('[data-page-depth]');
+        const unfold = el.querySelector<HTMLElement>('[data-unfold]');
+        const journey = el.querySelector<HTMLElement>('[data-journey]');
+        let frame = 0;
+        const clamp = (v:number) => Math.max(0,Math.min(1,v));
+        const update = () => {
+            frame = 0;
+            const bounds = el.getBoundingClientRect();
+            const height = el.clientHeight;
+            for(const target of targets) {
+                if(reduced.matches || target.getBoundingClientRect().top < bounds.top + height * .96) target.classList.add('is-seen');
             }
-        }, {threshold: Array.from({length:201},(_,i)=>i/200)});
-        const targets = el.querySelectorAll<HTMLElement>('.scroll-reveal, .art-open, .feature-image, [data-unfold], [data-page-depth], [data-handoff]');
-        const sync = () => {
-            targets.forEach(target => {
-                if(reduced.matches) {target.classList.add('is-seen'); target.style.setProperty('--unfold','1');target.style.setProperty('--depth','0');target.style.setProperty('--drift','0');target.style.setProperty('--handoff','1');}
-                else {target.classList.add('motion-ready'); observer.observe(target);}
-            });
+            if(journey && depth && unfold) {
+                const travelled = 80 - (journey.getBoundingClientRect().top - bounds.top);
+                const upper = reduced.matches ? 0 : clamp(travelled/620);
+                const handoff = reduced.matches ? 1 : clamp((travelled-620)/620);
+                const lower = reduced.matches ? 1 : clamp((travelled-930)/560);
+                const drift = reduced.matches ? 0 : clamp((travelled-1490)/500);
+                depth.style.setProperty('--depth',String(upper));
+                depth.dataset.progress = upper.toFixed(4);
+                journey.style.setProperty('--cross',String(handoff));
+                journey.dataset.progress = handoff.toFixed(4);
+                unfold.style.setProperty('--unfold',String(lower));
+                unfold.style.setProperty('--drift',String(drift));
+                unfold.dataset.progress = lower.toFixed(4);
+            }
         };
-        sync(); reduced.addEventListener('change',sync);
-        return () => {observer.disconnect(); reduced.removeEventListener('change',sync);};
+        const request = () => {if(!frame) frame=requestAnimationFrame(update);};
+        targets.forEach(target=>target.classList.add('motion-ready'));
+        unfold?.classList.add('motion-ready');
+        el.addEventListener('scroll',request,{passive:true});
+        window.addEventListener('resize',request,{passive:true});
+        reduced.addEventListener('change',request);
+        update();
+        return () => {cancelAnimationFrame(frame);el.removeEventListener('scroll',request);window.removeEventListener('resize',request);reduced.removeEventListener('change',request);};
     }, [changing, root]);
 }
 
@@ -172,16 +173,15 @@ function Gallery({ still = false }: { still?: boolean }) {
             <h1 className="display rise d2">Own the<br /><span>original.</span></h1>
             <div className="hero-line" />
             <div className="g-hero-art">
-                <DepthScene />
+                <div className="scene-journey" data-journey>
+                    <div className="journey-stage">
+                        <div className="journey-upper"><DepthScene pageFlow /></div>
+                        <div className="journey-lower"><GalleryContinuation /></div>
+                    </div>
+                </div>
                 <div className="cap rise d4"><span className="meta">A moving collection {DOT} Six perspectives</span><button type="button" className="text-link" onClick={() => jump('collection')}>Explore the collection ↘</button></div>
             </div>
         </header>
-        <div className="scene-handoff" data-handoff aria-label="Transition from the layered scene to the artwork spread">
-            <div className="handoff-surface"><img src={heroWide} alt="" /></div>
-            <div className="handoff-art" aria-hidden="true">{[0,1,2].map(i => <div key={i} className={`handoff-plane hp-${i}`} style={{backgroundImage:`url(${artCollage})`}} />)}</div>
-            <div className="handoff-rule" aria-hidden="true" />
-        </div>
-        <GalleryContinuation />
         <section className="g-section" id="collection">
             <div className="head scroll-reveal"><div><p className="kicker">01 / The collection</p><h2 className="display">Find your perspective.</h2></div><span className="meta" aria-live="polite">{visible.length} {visible.length === 1 ? 'piece' : 'pieces'} / illustrative collection</span></div>
             <div className="collection-filter" aria-label="Filter artworks">{['All works','Physical','Digital'].map(value => <button type="button" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{value}</button>)}</div>
@@ -205,6 +205,5 @@ function Gallery({ still = false }: { still?: boolean }) {
         <ArtworkPreview work={selected} onClose={() => setSelected(null)} />
     </div>;
 }
-
 
 export function App(){return <Routes><Route path="/" element={<Gallery/>}/><Route path="/gallery" element={<Gallery/>}/></Routes>;}
