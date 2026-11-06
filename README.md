@@ -14,7 +14,7 @@ A place for artists to show physical artwork and digital editions, with a separa
 - Offer light and dark themes and a product-colour preview.
 - Keep the art collection separate from resale listings.
 
-Three visual directions are being explored: Midnight Gallery, Kinetic Poster and Raw Signal. A final direction has not been selected.
+Midnight Gallery is the selected direction. The frontend opens directly into its quieter gallery layout and retains its layered scroll animation.
 
 ## Current status
 
@@ -24,7 +24,7 @@ This is not yet a working buying or selling platform. There is no seller account
 
 ## Repository workflow
 
-The main branch starts with this project overview. Frontend work belongs on a separate branch and is reviewed before merging. Setup commands will accompany runnable code on that branch.
+The main branch starts with this project overview. Frontend work belongs on a separate branch and is reviewed before merging. Runnable frontend source is on the frontend-demos branch. Nothing has been merged or deployed.
 
 Private inspiration recordings and project notes are not included in this public repository.
 
@@ -42,3 +42,7 @@ Open the local URL printed in the terminal. `npm run build` type-checks and buil
 The gallery depth effect uses a labelled internal scroll scene. Foreground artwork, middle artwork, backdrop and type move at different rates. Reduced-motion users receive a still composition. Real-phone performance has not yet been measured.
 
 The public source uses system fonts and original placeholder images. The compressed WebP placeholder images are embedded in `artwork.ts` and `artwork-extra.ts`; these are original demo assets, not third-party reference recordings. The source files sit together in the repository root. It contains no private inspiration recordings or project notes. No services or secret keys are required.
+
+## Current frontend interactions
+
+Collection navigation, physical/digital filtering, artwork detail previews, full-image/detail-crop controls, light/dark theme and a separate resale shelf. These controls only change local presentation. There are no real listings, accounts, orders or payments. The specific product-showcase motion reference is awaiting clarification and is not claimed implemented.
