@@ -168,7 +168,7 @@ function Gallery({ still = false }: { still?: boolean }) {
             <h1 className="display rise d2">Own the<br /><span>original.</span></h1>
             <div className="hero-line" />
             <div className="g-hero-art">
-                <DepthScene pageFlow />
+                <DepthScene />
                 <div className="cap rise d4"><span className="meta">A moving collection {DOT} Six perspectives</span><button type="button" className="text-link" onClick={() => jump('collection')}>Explore the collection ↘</button></div>
             </div>
         </header>
