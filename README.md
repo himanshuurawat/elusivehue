@@ -46,3 +46,7 @@ The public source uses system fonts and original placeholder images. The compres
 ## Current frontend interactions
 
 Collection navigation, physical/digital filtering, artwork detail previews, full-image/detail-crop controls, light/dark theme and a separate resale shelf. These controls only change local presentation. There are no real listings, accounts, orders or payments. The specific product-showcase motion reference is awaiting clarification and is not claimed implemented.
+
+## Motion continuation
+
+After the layered hero, a three-artwork spread unfolds into view, followed by staggered collection reveals and a quiet crop-to-full-image feature transition. These use native visibility observation and transform/opacity changes, with no new animation dependency or continuous render loop. Reduced-motion users get a still composition.
