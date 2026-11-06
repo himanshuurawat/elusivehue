@@ -93,13 +93,59 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
     </dialog>;
 }
 
+function GalleryContinuation() {
+    return <section className="gallery-continuation" aria-label="From a single mark to a collection">
+        <div className="continuation-copy scroll-reveal"><p className="kicker">Keep looking</p><h2 className="display">One mark.<br /><i>Many worlds.</i></h2></div>
+        <div className="unfold-scene" data-unfold>
+            <div className="unfold-orbit" aria-hidden="true" />
+            <figure className="unfold-piece unfold-left"><img src={artFigure} alt="Charcoal movement study" /><figcaption>01 / Gesture</figcaption></figure>
+            <figure className="unfold-piece unfold-center"><img src={artCollage} alt="Textured paper collage" /><figcaption>02 / Texture</figcaption></figure>
+            <figure className="unfold-piece unfold-right"><img src={artContour} alt="Abstract contour field" /><figcaption>03 / Possibility</figcaption></figure>
+            <span className="unfold-line" aria-hidden="true" />
+        </div>
+        <div className="continuation-end scroll-reveal"><span className="meta">Different hands. A shared point of view.</span><span aria-hidden="true">↓</span></div>
+    </section>;
+}
+
+function useGalleryMotion(root: React.RefObject<HTMLDivElement | null>, changing: string) {
+    React.useEffect(() => {
+        const el = root.current;
+        if(!el || !('IntersectionObserver' in window)) return;
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const observer = new IntersectionObserver(entries => {
+            for(const entry of entries) {
+                const target = entry.target as HTMLElement;
+                if(target.hasAttribute('data-unfold')) {
+                    const p = Math.min(1, entry.intersectionRatio / .72);
+                    const previous = Number(target.dataset.progress || 0);
+                    if(p > previous) { target.dataset.progress = String(p); target.style.setProperty('--unfold', String(p)); }
+                } else if(entry.isIntersecting && entry.intersectionRatio > .08) {
+                    target.classList.add('is-seen');
+                    observer.unobserve(target);
+                }
+            }
+        }, {threshold: Array.from({length:41},(_,i)=>i/40)});
+        const targets = el.querySelectorAll<HTMLElement>('.scroll-reveal, .art-open, .feature-image, [data-unfold]');
+        const sync = () => {
+            targets.forEach(target => {
+                if(reduced.matches) {target.classList.add('is-seen'); target.style.setProperty('--unfold','1');}
+                else {target.classList.add('motion-ready'); observer.observe(target);}
+            });
+        };
+        sync(); reduced.addEventListener('change',sync);
+        return () => {observer.disconnect(); reduced.removeEventListener('change',sync);};
+    }, [changing, root]);
+}
+
 function Gallery({ still = false }: { still?: boolean }) {
     const [alt, setAlt] = useState(false);
     const [filter, setFilter] = useState('All works');
+    const galleryRoot = React.useRef<HTMLDivElement>(null);
+    useGalleryMotion(galleryRoot, filter);
     const [selected, setSelected] = useState<typeof works[number] | null>(null);
     const visible = works.filter(w => filter === 'All works' || w.kind.startsWith(filter));
     const jump = (id: string) => document.getElementById(id)?.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
-    return <div className={`stage gallery chosen-gallery${still ? ' still' : ''}${alt ? ' alt' : ''}`}>
+    return <div ref={galleryRoot} className={`stage gallery chosen-gallery${still ? ' still' : ''}${alt ? ' alt' : ''}`}>
         <div className="grain" />
         <nav className="pillnav chosen-nav" aria-label="Gallery navigation">
             <button className="brand-button" type="button" onClick={() => jump('gallery-top')} aria-label="Elusive Hue home"><Wordmark /></button>
@@ -117,18 +163,19 @@ function Gallery({ still = false }: { still?: boolean }) {
                 <div className="cap rise d4"><span className="meta">A moving collection {DOT} Six perspectives</span><button type="button" className="text-link" onClick={() => jump('collection')}>Explore the collection ↘</button></div>
             </div>
         </header>
+        <GalleryContinuation />
         <section className="g-section" id="collection">
-            <div className="head"><div><p className="kicker">01 / The collection</p><h2 className="display">Find your perspective.</h2></div><span className="meta" aria-live="polite">{visible.length} {visible.length === 1 ? 'piece' : 'pieces'} / illustrative collection</span></div>
+            <div className="head scroll-reveal"><div><p className="kicker">01 / The collection</p><h2 className="display">Find your perspective.</h2></div><span className="meta" aria-live="polite">{visible.length} {visible.length === 1 ? 'piece' : 'pieces'} / illustrative collection</span></div>
             <div className="collection-filter" aria-label="Filter artworks">{['All works','Physical','Digital'].map(value => <button type="button" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{value}</button>)}</div>
             <div className="g-works">
-                {visible.map((w, i) => <button className="g-card art-open" type="button" key={w.title} onClick={() => setSelected(w)} aria-label={`Preview ${w.title}`}>
+                {visible.map((w, i) => <button className="g-card art-open" style={{"--card-delay": `${(i % 2) * 90}ms`} as React.CSSProperties} type="button" key={w.title} onClick={() => setSelected(w)} aria-label={`Preview ${w.title}`}>
                     <div className="ph"><img src={w.img} alt={`${w.title}, illustrative artwork`} loading="lazy" /><span className="art-open-label">View artwork ↗</span></div>
                     <div className="row"><span className="t">{w.title}</span><span className="p">{w.price}</span></div><div className="a">{w.artist} {DOT} {w.kind}</div>
                 </button>)}
             </div>
         </section>
         <section className="g-section">
-            <div className="g-feature"><div className="feature-image"><img src={artFigure} alt="Movement III, illustrative charcoal figure study" loading="lazy" /></div><div>
+            <div className="g-feature"><div className="feature-image"><img src={artFigure} alt="Movement III, illustrative charcoal figure study" loading="lazy" /></div><div className="scroll-reveal">
                 <p className="kicker">02 / A closer look</p><h3 className="display">A study<br />in movement.</h3>
                 <p>A figure held between stillness and motion. Take a closer look at the light, texture and marks.</p>
                 <p className="meta">Movement III {DOT} Illustrative artwork</p><button type="button" className="gallery-cta" onClick={() => setSelected(works[2])}>Explore the artwork ↗</button>
