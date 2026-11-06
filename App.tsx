@@ -46,8 +46,8 @@ function Wordmark() {
     return <span className="wordmark">elusive<i>{DOT}</i>hue</span>;
 }
 
-function DepthScene() {
-    return <div className="depth-scroll" tabIndex={0} role="region" aria-label="Layered art scene. Scroll here to explore depth." onScroll={e => { const el=e.currentTarget; el.style.setProperty('--depth', String(Math.min(1, el.scrollTop / 620))); }}>
+function DepthScene({ pageFlow = false }: { pageFlow?: boolean }) {
+    return <div className={`depth-scroll${pageFlow ? ' page-depth' : ''}`} data-page-depth={pageFlow ? 'true' : undefined} tabIndex={pageFlow ? undefined : 0} role="region" aria-label={pageFlow ? "Layered art scene, animated by page scrolling" : "Layered art scene. Scroll here to explore depth."} onScroll={e => { const el=e.currentTarget; el.style.setProperty('--depth', String(Math.min(1, el.scrollTop / 620))); }}>
         <div className="depth-track">
             <div className="depth-scene">
                 <div className="depth-bg"><img src={heroWide} alt="A quiet abstract landscape of paint" /></div>
@@ -55,7 +55,7 @@ function DepthScene() {
                 <div className="depth-title"><span className="kicker">An independent point of view</span><h2>Art has<br /><i>another layer.</i></h2></div>
                 <div className="depth-mid"><img src={artFigure} alt="Charcoal figure on the middle plane" /><span>Study in movement / Physical</span></div>
                 <div className="depth-front"><img src={artCollage} alt="Paper collage on the foreground plane" /><span>Objects with a story</span></div>
-                <span className="depth-hint">Scroll inside the scene <b>↓</b></span>
+                <span className="depth-hint">{pageFlow ? 'Keep scrolling' : 'Scroll inside the scene'} <b>↓</b></span>
                 <span className="depth-outro">A closer look.<br /><small>Different planes. One collection.</small></span>
             </div>
         </div>
@@ -115,20 +115,29 @@ function useGalleryMotion(root: React.RefObject<HTMLDivElement | null>, changing
         const observer = new IntersectionObserver(entries => {
             for(const entry of entries) {
                 const target = entry.target as HTMLElement;
-                if(target.hasAttribute('data-unfold')) {
-                    const p = Math.min(1, entry.intersectionRatio / .72);
-                    const previous = Number(target.dataset.progress || 0);
-                    if(p > previous) { target.dataset.progress = String(p); target.style.setProperty('--unfold', String(p)); }
+                if(target.hasAttribute('data-page-depth') || target.hasAttribute('data-unfold')) {
+                    if(!entry.isIntersecting) continue;
+                    const height = entry.boundingClientRect.height;
+                    const passed = Math.max(0, entry.intersectionRect.top - entry.boundingClientRect.top) / height;
+                    if(target.hasAttribute('data-page-depth')) {
+                        target.style.setProperty('--depth', String(Math.min(1, passed * 1.7)));
+                    } else {
+                        const visible = Math.min(1, entry.intersectionRect.height / height);
+                        const p = passed > .01 ? 1 : Math.max(0, Math.min(1, (visible - .35) / .6));
+                        target.style.setProperty('--unfold', String(p));
+                        target.style.setProperty('--drift', String(passed));
+                        target.dataset.progress = p.toFixed(3);
+                    }
                 } else if(entry.isIntersecting && entry.intersectionRatio > .08) {
                     target.classList.add('is-seen');
                     observer.unobserve(target);
                 }
             }
-        }, {threshold: Array.from({length:41},(_,i)=>i/40)});
-        const targets = el.querySelectorAll<HTMLElement>('.scroll-reveal, .art-open, .feature-image, [data-unfold]');
+        }, {threshold: Array.from({length:201},(_,i)=>i/200)});
+        const targets = el.querySelectorAll<HTMLElement>('.scroll-reveal, .art-open, .feature-image, [data-unfold], [data-page-depth]');
         const sync = () => {
             targets.forEach(target => {
-                if(reduced.matches) {target.classList.add('is-seen'); target.style.setProperty('--unfold','1');}
+                if(reduced.matches) {target.classList.add('is-seen'); target.style.setProperty('--unfold','1');target.style.setProperty('--depth','0');target.style.setProperty('--drift','0');}
                 else {target.classList.add('motion-ready'); observer.observe(target);}
             });
         };
@@ -159,7 +168,7 @@ function Gallery({ still = false }: { still?: boolean }) {
             <h1 className="display rise d2">Own the<br /><span>original.</span></h1>
             <div className="hero-line" />
             <div className="g-hero-art">
-                <DepthScene />
+                <DepthScene pageFlow />
                 <div className="cap rise d4"><span className="meta">A moving collection {DOT} Six perspectives</span><button type="button" className="text-link" onClick={() => jump('collection')}>Explore the collection ↘</button></div>
             </div>
         </header>
