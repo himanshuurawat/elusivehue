@@ -541,3 +541,26 @@ body { background: #0a0909; }
 
 /* Keep the approved upper interaction, let its edges chain into the page. */
 .chosen-gallery .depth-scroll { overscroll-behavior-y:auto; }
+/* The seam itself animates: artwork opens into a shared texture, then clears. */
+.chosen-gallery .g-hero-art .cap { display:none; }
+.scene-handoff { --handoff:0; position:relative; height:300px; margin:-70px auto -95px; max-width:1160px; overflow:hidden; isolation:isolate; z-index:6; pointer-events:none; }
+.handoff-surface { position:absolute; inset:0; opacity:calc(.8 - var(--handoff) * .55); transform:scale(calc(1.1 + var(--handoff) * .25)); mask-image:linear-gradient(transparent,#000 20%,#000 70%,transparent); }
+.handoff-surface img { width:100%; height:100%; object-fit:cover; filter:grayscale(1); }
+.handoff-art { position:absolute; width:72%; height:250px; top:0; left:14%; transform:translate3d(calc(var(--handoff) * -32%),calc(30px - var(--handoff) * 130px),0) rotate(calc(14deg - var(--handoff) * 32deg)) scale(calc(.6 + var(--handoff) * 1.6)); opacity:calc(1 - var(--handoff)); transform-origin:50% 0; }
+.handoff-art img { width:100%; height:100%; object-fit:cover; }
+.handoff-rule { position:absolute; height:1px; background:var(--ink2); width:80%; left:10%; top:56%; transform:scaleX(calc(.2 + var(--handoff) * .8)) rotate(calc(-12deg + var(--handoff) * 12deg)); opacity:calc(.5 - var(--handoff) * .5); }
+.handoff-art,.handoff-surface,.handoff-rule { transition:transform .12s linear,opacity .12s linear; }
+.gallery-continuation { position:relative; z-index:7; }
+@media(min-width:768px) { .scene-handoff { height:380px; margin-top:-100px; margin-bottom:-130px; } .handoff-art { width:50%;left:25%;height:340px; } }
+@media(prefers-reduced-motion:reduce) { .scene-handoff { display:none; } }
+
+.scene-handoff { height:360px; margin:0 auto -55px; mask-image:linear-gradient(transparent,#000 10%,#000 70%,transparent); }
+.handoff-art { inset:0; width:100%; height:100%; opacity:calc(1 - var(--handoff) * .85); transform:none; display:flex; }
+.handoff-plane { width:33.34%; height:100%; background-size:300% 100%; background-repeat:no-repeat; transition:transform .12s linear; }
+.hp-0 { background-position:0 0;transform:translateY(calc(var(--handoff) * -220px)); }
+.hp-1 { background-position:50% 0;transform:translateY(calc(var(--handoff) * -100px)); }
+.hp-2 { background-position:100% 0;transform:translateY(calc(var(--handoff) * -300px)); }
+.handoff-surface { opacity:calc(.5 - var(--handoff) * .4); }
+.handoff-rule { display:none; }
+@media(min-width:768px) { .scene-handoff { height:450px;margin-top:0;margin-bottom:-90px; } .handoff-art { inset:0;width:100%;height:100%; } }
+@media(prefers-reduced-motion:reduce) { .handoff-plane { transition:none; } }
