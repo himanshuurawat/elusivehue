@@ -115,11 +115,15 @@ function useGalleryMotion(root: React.RefObject<HTMLDivElement | null>, changing
         const observer = new IntersectionObserver(entries => {
             for(const entry of entries) {
                 const target = entry.target as HTMLElement;
-                if(target.hasAttribute('data-page-depth') || target.hasAttribute('data-unfold')) {
+                if(target.hasAttribute('data-handoff') || target.hasAttribute('data-page-depth') || target.hasAttribute('data-unfold')) {
                     if(!entry.isIntersecting) continue;
                     const height = entry.boundingClientRect.height;
                     const passed = Math.max(0, entry.intersectionRect.top - entry.boundingClientRect.top) / height;
-                    if(target.hasAttribute('data-page-depth')) {
+                    if(target.hasAttribute('data-handoff')) {
+                        const visible = entry.intersectionRect.height / height;
+                        const p = passed > .01 ? Math.min(1, .45 + passed * .55) : Math.max(0, Math.min(.45, visible * .45));
+                        target.style.setProperty('--handoff', String(p));
+                    } else if(target.hasAttribute('data-page-depth')) {
                         target.style.setProperty('--depth', String(Math.min(1, passed * 1.7)));
                     } else {
                         const visible = Math.min(1, entry.intersectionRect.height / height);
@@ -134,10 +138,10 @@ function useGalleryMotion(root: React.RefObject<HTMLDivElement | null>, changing
                 }
             }
         }, {threshold: Array.from({length:201},(_,i)=>i/200)});
-        const targets = el.querySelectorAll<HTMLElement>('.scroll-reveal, .art-open, .feature-image, [data-unfold], [data-page-depth]');
+        const targets = el.querySelectorAll<HTMLElement>('.scroll-reveal, .art-open, .feature-image, [data-unfold], [data-page-depth], [data-handoff]');
         const sync = () => {
             targets.forEach(target => {
-                if(reduced.matches) {target.classList.add('is-seen'); target.style.setProperty('--unfold','1');target.style.setProperty('--depth','0');target.style.setProperty('--drift','0');}
+                if(reduced.matches) {target.classList.add('is-seen'); target.style.setProperty('--unfold','1');target.style.setProperty('--depth','0');target.style.setProperty('--drift','0');target.style.setProperty('--handoff','1');}
                 else {target.classList.add('motion-ready'); observer.observe(target);}
             });
         };
@@ -172,6 +176,11 @@ function Gallery({ still = false }: { still?: boolean }) {
                 <div className="cap rise d4"><span className="meta">A moving collection {DOT} Six perspectives</span><button type="button" className="text-link" onClick={() => jump('collection')}>Explore the collection ↘</button></div>
             </div>
         </header>
+        <div className="scene-handoff" data-handoff aria-label="Transition from the layered scene to the artwork spread">
+            <div className="handoff-surface"><img src={heroWide} alt="" /></div>
+            <div className="handoff-art" aria-hidden="true">{[0,1,2].map(i => <div key={i} className={`handoff-plane hp-${i}`} style={{backgroundImage:`url(${artCollage})`}} />)}</div>
+            <div className="handoff-rule" aria-hidden="true" />
+        </div>
         <GalleryContinuation />
         <section className="g-section" id="collection">
             <div className="head scroll-reveal"><div><p className="kicker">01 / The collection</p><h2 className="display">Find your perspective.</h2></div><span className="meta" aria-live="polite">{visible.length} {visible.length === 1 ? 'piece' : 'pieces'} / illustrative collection</span></div>
