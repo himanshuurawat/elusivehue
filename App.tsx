@@ -70,7 +70,13 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
         if (work && !dialog.current?.open) dialog.current?.showModal();
         if (!work && dialog.current?.open) dialog.current.close();
     }, [work]);
-    return <dialog ref={dialog} className="art-dialog" onClose={onClose} onClick={e => {if(e.target === e.currentTarget) onClose();}}>
+    return <dialog ref={dialog} className="art-dialog" onKeyDown={e => {
+        if(e.key !== 'Tab') return;
+        const buttons = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('button:not([disabled])'));
+        const first = buttons[0], last = buttons[buttons.length - 1];
+        if(e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+        if(!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+    }} onClose={onClose} onClick={e => {if(e.target === e.currentTarget) onClose();}}>
         {work && <div className="art-detail">
             <button type="button" className="detail-close" aria-label="Close artwork preview" onClick={onClose}>Close ×</button>
             <div className={`detail-image${detail ? ' cropped' : ''}`}><img src={work.img} alt={`${work.title}, illustrative artwork`} /></div>
