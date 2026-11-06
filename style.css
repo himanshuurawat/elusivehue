@@ -538,3 +538,6 @@ body { background: #0a0909; }
 @media(prefers-reduced-motion:reduce) { .page-depth .depth-bg,.page-depth .depth-halo,.page-depth .depth-title,.page-depth .depth-mid,.page-depth .depth-front,.page-depth .depth-outro,.unfold-piece,.unfold-orbit,.unfold-line { transition:none; } .unfold-scene.motion-ready { --drift:0!important; } }
 
 .page-depth .depth-hint { opacity:calc(1 - var(--depth) * 5); }
+
+/* Keep the approved upper interaction, let its edges chain into the page. */
+.chosen-gallery .depth-scroll { overscroll-behavior-y:auto; }
