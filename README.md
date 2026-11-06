@@ -50,3 +50,5 @@ Collection navigation, physical/digital filtering, artwork detail previews, full
 ## Motion continuation
 
 After the layered hero, a three-artwork spread unfolds into view, followed by staggered collection reveals and a quiet crop-to-full-image feature transition. The upper scene follows its own scroll, while the following artwork spread uses native visibility observation to follow page scroll in both directions. They use transform/opacity changes, with no new animation dependency or continuous render loop. Reduced-motion users get a still composition.
+
+The seam between the upper scene and lower spread now has a shared paper-texture transition: three foreground planes travel at different rates and clear away with scroll. Both existing scene effects remain.
