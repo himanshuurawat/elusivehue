@@ -39,7 +39,7 @@ npm run dev
 
 Open the local URL printed in the terminal. `npm run build` type-checks and builds the project; `npm run preview` shows the built version locally.
 
-The gallery depth effect uses a labelled internal scroll scene. Foreground artwork, middle artwork, backdrop and type move at different rates. Reduced-motion users receive a still composition. Real-phone performance has not yet been measured.
+The selected gallery depth effect follows page scrolling, without a separate internal scroller. Foreground artwork, middle artwork, backdrop and type move at different rates. Reduced-motion users receive a still composition. Real-phone performance has not yet been measured.
 
 The public source uses system fonts and original placeholder images. The compressed WebP placeholder images are embedded in `artwork.ts` and `artwork-extra.ts`; these are original demo assets, not third-party reference recordings. The source files sit together in the repository root. It contains no private inspiration recordings or project notes. No services or secret keys are required.
 
@@ -49,4 +49,4 @@ Collection navigation, physical/digital filtering, artwork detail previews, full
 
 ## Motion continuation
 
-After the layered hero, a three-artwork spread unfolds into view, followed by staggered collection reveals and a quiet crop-to-full-image feature transition. These use native visibility observation and transform/opacity changes, with no new animation dependency or continuous render loop. Reduced-motion users get a still composition.
+After the layered hero, a three-artwork spread unfolds into view, followed by staggered collection reveals and a quiet crop-to-full-image feature transition. The layered scene and artwork spread use native visibility observation to follow page scroll in both directions. They use transform/opacity changes, with no new animation dependency or continuous render loop. Reduced-motion users get a still composition.
