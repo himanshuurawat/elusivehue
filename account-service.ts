@@ -2,12 +2,14 @@ import {createClient,type SupabaseClient} from '@supabase/supabase-js';
 
 // Disabled by default. Only the approved project URL and public browser key belong here.
 // Never put a service-role key or a database password in browser configuration.
+let sharedClient:SupabaseClient|null=null;
 export function configuredAccountClient(): SupabaseClient|null {
+ if(sharedClient)return sharedClient;
  const url=import.meta.env.VITE_SUPABASE_URL;
  const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
  if(import.meta.env.VITE_ENABLE_AUTH!=='true'||!url||!key)return null;
  if(url!=='https://vljgcrbcncryyeztowrp.supabase.co')throw new Error('Use the approved Supabase project URL.');
- return createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
+ return sharedClient=createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
 }
 export function authReturnUrl(recovery=false):string {
  const raw=import.meta.env.VITE_AUTH_RETURN_URL;
