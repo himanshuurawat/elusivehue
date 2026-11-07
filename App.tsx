@@ -47,6 +47,46 @@ function Wordmark() {
     return <span className="wordmark">elusive<i>{DOT}</i>hue</span>;
 }
 
+function AnimatedWordmark() {
+    const ref = React.useRef<HTMLSpanElement>(null);
+    React.useEffect(() => {
+        const span = ref.current;
+        if(!span) return;
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+        let playing = true;
+        if(!reduced.matches) span.classList.add('wm-intro'); else playing = false;
+        const play = () => {
+            if(playing || reduced.matches) return;
+            playing = true;
+            span.classList.add('wm-play');
+        };
+        const dot = span.querySelector('.wm-dot');
+        const onEnd = () => { playing = false; span.classList.remove('wm-intro'); span.classList.remove('wm-play'); };
+        dot?.addEventListener('animationend', onEnd);
+        window.addEventListener('scroll', play, {passive:true, capture:true});
+        window.addEventListener('pointerdown', play, {passive:true});
+        window.addEventListener('touchstart', play, {passive:true});
+        window.addEventListener('keydown', play);
+        return () => {
+            window.removeEventListener('scroll', play, {capture:true} as EventListenerOptions);
+            window.removeEventListener('pointerdown', play);
+            window.removeEventListener('touchstart', play);
+            window.removeEventListener('keydown', play);
+            dot?.removeEventListener('animationend', onEnd);
+        };
+    }, []);
+    return <span ref={ref} className="wordmark-anim" role="img" aria-label="Elusive Hue">
+        <svg viewBox="146 256 336 114" aria-hidden="true">
+            <text x="333" y="330" textAnchor="end" fontSize="74">elus&#x131;ve</text>
+            <g className="wm-hue">
+                <text x="342" y="330" fontSize="74">hue</text>
+            </g>
+            <line className="wm-ul" x1="342" y1="346" x2="451" y2="346" />
+            <circle className="wm-dot" r="5.5" />
+        </svg>
+    </span>;
+}
+
 function DepthScene({ pageFlow = false }: { pageFlow?: boolean }) {
     return <div className={`depth-scroll${pageFlow ? ' page-depth' : ''}`} data-page-depth={pageFlow ? 'true' : undefined} tabIndex={pageFlow ? undefined : 0} role="region" aria-label={pageFlow ? "Layered art scene, animated by page scrolling" : "Layered art scene. Scroll here to explore depth."} onScroll={e => { const el=e.currentTarget; el.style.setProperty('--depth', String(Math.min(1, el.scrollTop / 620))); }}>
         <div className="depth-track">
@@ -286,7 +326,7 @@ function Gallery({ still = false }: { still?: boolean }) {
     return <div ref={galleryRoot} className={`stage gallery chosen-gallery${still ? ' still' : ''}${alt ? ' alt' : ''}`}>
         <div className="grain" />
         <nav className="pillnav chosen-nav" aria-label="Gallery navigation">
-            <button className="brand-button" type="button" onClick={() => jump('gallery-top')} aria-label="Elusive Hue home"><Wordmark /></button>
+            <button className="brand-button" type="button" onClick={() => jump('gallery-top')} aria-label="Elusive Hue home"><AnimatedWordmark /></button>
             <button type="button" onClick={() => jump('collection')}>Collection</button>
             <button type="button" onClick={() => jump('secondhand')}>Resale</button>
             <a href="#/account" className="account-nav-link">Account</a><button type="button" className="themebtn" onClick={() => setAlt(!alt)} aria-pressed={alt}>{alt ? 'Dark' : 'Light'}</button>
