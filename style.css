@@ -739,3 +739,8 @@ body { background: #0a0909; }
 @media(max-width:650px){.listing-invite{display:block}.listing-invite button{margin-top:20px}.listing-dialog{width:100%;height:100%;max-height:100dvh;margin:0}.listing-shell{padding:0 22px 32px}.listing-top{padding:14px 0}.listing-top .kicker{font-size:8px;letter-spacing:.1em}.listing-form,.listing-preview{grid-template-columns:1fr;gap:28px}.listing-heading{margin-top:24px}.listing-image{aspect-ratio:4/4}.listing-field-row{gap:10px}}
 .chosen-nav .account-nav-link{color:inherit;text-decoration:none;font-size:12px;padding:10px 12px;white-space:nowrap}.chosen-nav .account-nav-link:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:20px}@media(max-width:450px){.chosen-nav .account-nav-link{padding:10px 7px;font-size:11px}.chosen-nav>button{padding-left:7px;padding-right:7px}}
 @media(max-width:360px){.chosen-gallery .chosen-nav{gap:2px;padding:6px}.chosen-nav .wordmark{font-size:11px;letter-spacing:.03em}.chosen-nav>button{font-size:10px;padding:0 4px}.chosen-nav .themebtn{letter-spacing:.08em}.chosen-nav .account-nav-link{font-size:10px;padding:10px 4px}}
+
+/* Legal links are also available before the lazy account screen loads. */
+.g-foot nav{display:flex;flex-wrap:wrap;gap:24px}.g-foot nav a{color:inherit;min-height:44px;display:inline-flex;align-items:center}
+
+.developer-credit{color:var(--ink2);font-size:12px;line-height:1.5;text-decoration:none;display:inline-flex;align-items:center;gap:8px;align-self:flex-start;min-height:44px}.developer-credit:hover{color:var(--ink)}.developer-credit:focus-visible{outline:2px solid currentColor;outline-offset:5px;border-radius:2px}
