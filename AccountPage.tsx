@@ -6,6 +6,8 @@ import {configuredAccountClient,authReturnUrl} from './account-service';
 import {ProfilePanel} from './ProfilePanel';
 import type {Session} from '@supabase/supabase-js';
 const client=configuredAccountClient();
+// Separate opt-in. Email auth must stay usable while Google is being staged.
+const googleEnabled=Boolean(client)&&import.meta.env.VITE_ENABLE_GOOGLE_AUTH==='true';
 
 type Mode='login'|'signup'|'reset'|'update';
 export function AccountPage(){
@@ -43,6 +45,15 @@ export function AccountPage(){
    }
   }catch(error){setMessage(error instanceof Error?error.message:'Could not complete that request. Try again.');}finally{setBusy(false);}
  };
+ const signInWithGoogle=async()=>{
+  if(!client||!googleEnabled||busy||checking)return;
+  setBusy(true);setMessage('');
+  try{
+   const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:authReturnUrl(),scopes:'openid email profile',queryParams:{prompt:'select_account'}}});
+   if(error)throw error;
+  }catch(error){setMessage(error instanceof Error?error.message:'Could not open Google sign-in. Try again.');}
+  finally{setBusy(false);}
+ };
  const name=useRef<HTMLInputElement>(null);
  const stage=useRef<HTMLDivElement>(null);
  useEffect(()=>{document.title='Your space | Elusive Hue';return()=>{document.title='Elusive Hue';};},[]);
@@ -72,7 +83,7 @@ export function AccountPage(){
      <button className="account-submit" disabled={busy||checking} type="submit">{busy?'Please wait...':mode==='login'?'Sign in':mode==='signup'?'Create account':mode==='update'?'Update password':'Send reset link'} <span aria-hidden="true">↗</span></button>
      {message&&<p className="account-message" role="status">{message}</p>}
     </form>
-    {mode!=='reset'&&mode!=='update'?<><div className="account-divider"><span/>or<span/></div><button className="account-google" type="button" disabled><span aria-hidden="true">G</span> Continue with Google</button><p className="account-setup">Google sign-in is not connected yet.</p></>:<button className="account-back" type="button" disabled={recovering} onClick={()=>setMode('login')}>← Back to sign in</button>}
+    {mode!=='reset'&&mode!=='update'?<><div className="account-divider"><span/>or<span/></div><button className="account-google" type="button" disabled={!googleEnabled||busy||checking} onClick={signInWithGoogle}><span aria-hidden="true">G</span> Continue with Google</button>{!googleEnabled&&<p className="account-setup">Google sign-in is not connected yet.</p>}</>:<button className="account-back" type="button" disabled={recovering} onClick={()=>setMode('login')}>← Back to sign in</button>}
     {!client&&<p className="account-preview-note">Design preview only. Please don't enter a real password.<br/>Nothing is sent or saved.</p>}
    </section>}
   </div>
