@@ -2,15 +2,16 @@ import React, {useEffect,useRef,useState} from 'react';
 import {Link} from 'react-router-dom';
 import {artFigure,artCollage,artContour} from './artwork';
 import './account.css';
-import {configuredAccountClient} from './account-service';
+import {configuredAccountClient,authReturnUrl} from './account-service';
 import {ProfilePanel} from './ProfilePanel';
 import type {Session} from '@supabase/supabase-js';
 const client=configuredAccountClient();
 
-type Mode='login'|'signup'|'reset';
+type Mode='login'|'signup'|'reset'|'update';
 export function AccountPage(){
  const [mode,setMode]=useState<Mode>('login');
  const [show,setShow]=useState(false);
+ const [recovering,setRecovering]=useState(false);
  const [message,setMessage]=useState('');
  const [paused,setPaused]=useState(false);
  const [busy,setBusy]=useState(false);
@@ -29,15 +30,16 @@ export function AccountPage(){
 
  const [session,setSession]=useState<Session|null>(null);
  const [checking,setChecking]=useState(Boolean(client));
- useEffect(()=>{if(!client)return;let active=true;client.auth.getSession().then(({data,error})=>{if(!active)return;if(error)setMessage(error.message);setSession(data.session);setChecking(false);});const {data}=client.auth.onAuthStateChange((_event,next)=>{setSession(next);setChecking(false);});return()=>{active=false;data.subscription.unsubscribe();};},[]);
+ useEffect(()=>{if(!client)return;let active=true;client.auth.getSession().then(({data,error})=>{if(!active)return;if(error)setMessage(error.message);setSession(data.session);setChecking(false);});const {data}=client.auth.onAuthStateChange((_event,next)=>{setSession(next);if(_event==='PASSWORD_RECOVERY'){setRecovering(true);setMode('update');}setChecking(false);});return()=>{active=false;data.subscription.unsubscribe();};},[]);
  const submit=async(e:React.FormEvent<HTMLFormElement>)=>{
   e.preventDefault();if(!client){setMessage('This is the design preview. Account creation and sign-in are not connected yet.');return;}
   const data=new FormData(e.currentTarget),email=String(data.get('email')||'').trim(),password=String(data.get('password')||'');setBusy(true);setMessage('');
   try{
    if(mode==='login'){const {error}=await client.auth.signInWithPassword({email,password});if(error)throw error;}
-   else {const redirect=import.meta.env.VITE_AUTH_RETURN_URL;if(!redirect)throw new Error('Account confirmation and recovery are not configured yet.');
+   else {const redirect=authReturnUrl(mode==='reset');
     if(mode==='signup'){const {data:result,error}=await client.auth.signUp({email,password,options:{emailRedirectTo:redirect,data:{username:String(data.get('username')||'').trim()}}});if(error)throw error;if(!result.session)setMessage('Check your email for a confirmation link before signing in.');}
-    else{throw new Error('Password recovery is not available yet. It needs its configured return page before release.');}
+    else if(mode==='reset'){const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:redirect});if(error)throw error;setMessage('If this email has an account, a reset link is on its way. Open it in this same browser.');}
+    else{if(!recovering||!session)throw new Error('Open a fresh password reset link first.');const {error}=await client.auth.updateUser({password});if(error)throw error;setRecovering(false);setMode('login');setMessage('Password updated.');}
    }
   }catch(error){setMessage(error instanceof Error?error.message:'Could not complete that request. Try again.');}finally{setBusy(false);}
  };
@@ -59,18 +61,18 @@ export function AccountPage(){
     <div className="account-cascade" aria-hidden="true"><div className="cascade-sheet sheet-back"><img src={artContour} alt=""/></div><div className="cascade-sheet sheet-middle"><img src={artCollage} alt=""/></div><div className="cascade-sheet sheet-front"><img src={artFigure} alt=""/><span>Stillness, with a little movement.</span></div></div>
     <div className="account-art-foot"><span>Look. Collect. Create.</span><button type="button" onClick={()=>setPaused(!paused)} aria-pressed={paused}>{paused?'Play motion':'Pause motion'} <span aria-hidden="true">{paused?'▷':'Ⅱ'}</span></button></div>
    </section>
-   {session&&client?<ProfilePanel client={client} onSignOut={()=>setSession(null)}/>:<section className="account-form-panel account-flow-panel" aria-label="Your account"><div className="form-flow-wash" aria-hidden="true"><i/><i/><i/></div>
-    <div className="account-mode" role="group" aria-label="Account action"><button type="button" aria-pressed={mode==='login'} onClick={()=>setMode('login')}>Sign in</button><button type="button" aria-pressed={mode==='signup'} onClick={()=>setMode('signup')}>Create account</button></div>
-    <div className="account-heading"><p className="account-eyebrow">Your own corner of Elusive Hue</p><h1>{mode==='login'?<>Good to<br/><i>see you.</i></>:mode==='signup'?<>A new<br/><i>perspective.</i></>:<>Back to<br/><i>your space.</i></>}</h1><p>{mode==='login'?'The art you love. The work you make. One account.':mode==='signup'?'One account for discovering art and sharing your own.':'Get a link to choose a new password.'}</p></div>
+   {session&&client&&!recovering?<ProfilePanel client={client} onSignOut={()=>setSession(null)}/>:<section className="account-form-panel account-flow-panel" aria-label="Your account"><div className="form-flow-wash" aria-hidden="true"><i/><i/><i/></div>
+    <div className="account-mode" role="group" aria-label="Account action"><button type="button" aria-pressed={mode==='login'} disabled={recovering} onClick={()=>setMode('login')}>Sign in</button><button type="button" aria-pressed={mode==='signup'} disabled={recovering} onClick={()=>setMode('signup')}>Create account</button></div>
+    <div className="account-heading"><p className="account-eyebrow">Your own corner of Elusive Hue</p><h1>{mode==='login'?<>Good to<br/><i>see you.</i></>:mode==='signup'?<>A new<br/><i>perspective.</i></>:mode==='update'?<>Make it<br/><i>yours again.</i></>:<>Back to<br/><i>your space.</i></>}</h1><p>{mode==='login'?'The art you love. The work you make. One account.':mode==='signup'?'One account for discovering art and sharing your own.':mode==='update'?'Choose a new password for your account.':'Get a link to choose a new password. Open it in the same browser.'}</p></div>
     <form key={mode} className="account-flow-form" onInput={pulseField} onSubmit={submit}>
      {mode==='signup'&&<label>Username<input ref={name} name="username" autoComplete="username" minLength={3} maxLength={24} pattern="[a-zA-Z0-9_]{3,24}" placeholder="Your artist name" required/><small>3-24 letters, numbers or underscores.</small></label>}
-     <label>Email<input type="text" inputMode="email" pattern="[^ @]+@[^ @]+" name="email" autoComplete={mode==='login'?'username':'email'} placeholder="you@example.com" required maxLength={254}/></label>
-     {mode!=='reset'&&<label htmlFor="account-password">Password<div className="account-password"><input id="account-password" aria-label="Password" type={show?'text':'password'} name="password" autoComplete={mode==='login'?'current-password':'new-password'} minLength={mode==='signup'?8:undefined} maxLength={128} required placeholder={mode==='signup'?'At least 8 characters':'Your password'}/><button type="button" aria-label={show?'Hide password':'Show password'} onClick={()=>setShow(!show)}>{show?'Hide':'Show'}</button></div></label>}
+     {mode!=='update'&&<label>Email<input type="text" inputMode="email" pattern="[^ @]+@[^ @]+" name="email" autoComplete={mode==='login'?'username':'email'} placeholder="you@example.com" required maxLength={254}/></label>}
+     {mode!=='reset'&&<label htmlFor="account-password">Password<div className="account-password"><input id="account-password" aria-label="Password" type={show?'text':'password'} name="password" autoComplete={mode==='login'?'current-password':'new-password'} minLength={mode==='signup'||mode==='update'?8:undefined} maxLength={128} required placeholder={mode==='signup'||mode==='update'?'At least 8 characters':'Your password'}/><button type="button" aria-label={show?'Hide password':'Show password'} onClick={()=>setShow(!show)}>{show?'Hide':'Show'}</button></div></label>}
      {mode==='login'&&<button type="button" className="account-forgot" onClick={()=>setMode('reset')}>Forgot password?</button>}
-     <button className="account-submit" disabled={busy||checking} type="submit">{busy?'Please wait...':mode==='login'?'Sign in':mode==='signup'?'Create account':'Send reset link'} <span aria-hidden="true">↗</span></button>
+     <button className="account-submit" disabled={busy||checking} type="submit">{busy?'Please wait...':mode==='login'?'Sign in':mode==='signup'?'Create account':mode==='update'?'Update password':'Send reset link'} <span aria-hidden="true">↗</span></button>
      {message&&<p className="account-message" role="status">{message}</p>}
     </form>
-    {mode!=='reset'?<><div className="account-divider"><span/>or<span/></div><button className="account-google" type="button" disabled><span aria-hidden="true">G</span> Continue with Google</button><p className="account-setup">Google sign-in is next. Not connected in this preview.</p></>:<button className="account-back" type="button" onClick={()=>setMode('login')}>← Back to sign in</button>}
+    {mode!=='reset'&&mode!=='update'?<><div className="account-divider"><span/>or<span/></div><button className="account-google" type="button" disabled><span aria-hidden="true">G</span> Continue with Google</button><p className="account-setup">Google sign-in is not connected yet.</p></>:<button className="account-back" type="button" disabled={recovering} onClick={()=>setMode('login')}>← Back to sign in</button>}
     {!client&&<p className="account-preview-note">Design preview only. Please don't enter a real password.<br/>Nothing is sent or saved.</p>}
    </section>}
   </div>
