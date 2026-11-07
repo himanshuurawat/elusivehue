@@ -707,3 +707,13 @@ body { background: #0a0909; }
 @keyframes artwork-depth-drift {0%{transform:rotateX(6deg) rotateY(-15deg) translateY(0)}50%{transform:rotateX(-3deg) rotateY(4deg) translateY(-8px)}100%{transform:rotateX(5deg) rotateY(15deg) translateY(0)}}
 @media(min-width:768px){.product-stage{height:490px}.product-object{left:35%;width:30%;top:58px;height:330px}.product-word{top:135px;font-size:230px}.orbit-point{font-size:13px;max-width:190px}.orbit-point span{font-size:9px;margin-bottom:9px}.orbit-point::after{width:90px;margin-top:15px}.point-artist{left:70px;top:45px}.point-type{right:70px;top:45px}.point-medium{left:100px;top:295px}.point-view{right:100px;top:295px}.product-neighbor{top:175px;width:14%;height:100px}.neighbor-before{left:7%}.neighbor-after{right:7%}.product-neighbor span{font-size:11px}.product-stage-caption{left:35px;right:35px;bottom:14px;font-size:10px}.product-stage.is-detail .product-object{top:55px;height:340px;left:34%;width:32%}.product-mini-notes{margin:0 35px;font-size:10px}.product-motion-toggle{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.is-moving:not(.is-detail) .product-depth{animation:none;transform:rotateY(-8deg)}.orbit-point,.orbit-point::after,.product-mini-notes{animation:none}}
+.orbit-point small {display:block;font:9px/1.6 var(--text);color:#c8c4b9;margin-top:3px;}
+.point-view {top:355px;}
+.product-basic-specs {margin:20px 20px 0;padding:18px 0 8px;border-top:1px solid #ffffff20;border-bottom:1px solid #ffffff20;}
+.spec-heading {display:flex;justify-content:space-between;gap:12px;font:10px var(--text);color:#e7e2d8;margin-bottom:17px;}
+.spec-heading span:last-child {font-size:8px;text-transform:uppercase;letter-spacing:.06em;color:#bdb19a;}
+.product-basic-specs dl {display:grid;grid-template-columns:1fr 1fr;gap:18px 14px;margin:0;}
+.product-basic-specs dt {font:8px var(--text);text-transform:uppercase;letter-spacing:.08em;color:#a9a99f;margin-bottom:7px;}
+.product-basic-specs dd {font:12px/1.5 var(--text);margin:0;color:#eee9df;}
+.product-basic-specs p {font:9px/1.7 var(--text);color:#aaa99e;margin:16px 0 4px;max-width:50ch;}
+@media(min-width:768px){.point-view{top:295px}.orbit-point small{font-size:11px}.product-basic-specs{margin:20px 35px 0;padding:20px 0 14px}.product-basic-specs dl{grid-template-columns:repeat(4,1fr);gap:22px}.product-basic-specs dd{font-size:14px}.product-basic-specs p{font-size:10px}.spec-heading{font-size:12px}.spec-heading span:last-child{font-size:9px}}
