@@ -12,7 +12,7 @@ It runs on pushes to `main` and `ci-checks-learning`, and pull requests targetin
 
 ## Safety and cost
 
-- Standard `ubuntu-latest` runner, one job, ten-minute timeout.
+- Standard `ubuntu-24.04` runner, one job, ten-minute timeout.
 - Repository access is read-only. Checkout does not keep credentials.
 - No deployment tokens, Supabase credentials, paid runner, uploaded artifacts or dependency cache.
 - Actions are pinned to commit SHAs. Review version updates before changing those pins.
