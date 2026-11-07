@@ -314,7 +314,7 @@ function useGalleryMotion(root: React.RefObject<HTMLDivElement | null>, changing
     }, [changing, root]);
 }
 
-function Gallery({ still = false }: { still?: boolean }) {
+function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn?:boolean }) {
     const [alt, setAlt] = useState(false);
     const [filter, setFilter] = useState('All works');
     const [listingOpen,setListingOpen]=useState(false);
@@ -329,7 +329,7 @@ function Gallery({ still = false }: { still?: boolean }) {
             <button className="brand-button" type="button" onClick={() => jump('gallery-top')} aria-label="Elusive Hue home"><AnimatedWordmark /></button>
             <button type="button" onClick={() => jump('collection')}>Collection</button>
             <button type="button" onClick={() => jump('secondhand')}>Resale</button>
-            <a href="#/account" className="account-nav-link">Account</a><button type="button" className="themebtn" onClick={() => setAlt(!alt)} aria-pressed={alt}>{alt ? 'Dark' : 'Light'}</button>
+            <a href={signedIn?"#/account":"#/account?mode=signup"} className="account-nav-link">{signedIn?'Account':'Sign up'}</a><button type="button" className="themebtn" onClick={() => setAlt(!alt)} aria-pressed={alt}>{alt ? 'Dark' : 'Light'}</button>
         </nav>
         <header className="g-hero" id="gallery-top">
             <span className="vert rise d3">Midnight Gallery {DOT} A different perspective</span>
@@ -372,4 +372,26 @@ function Gallery({ still = false }: { still?: boolean }) {
     </div>;
 }
 
-export function App(){return <Routes><Route path="/" element={<Gallery/>}/><Route path="/gallery" element={<Gallery/>}/><Route path="/account" element={<React.Suspense fallback={<div style={{background:'#0b0b0c',color:'#efeee8',minHeight:'100vh',padding:32}} role="status">Opening your space...</div>}><AccountPage/></React.Suspense>}/></Routes>;}
+const guestKey='elusive-hue-guest-session';
+function guestChosen(){try{return sessionStorage.getItem(guestKey)==='true';}catch{return false;}}
+export function App(){
+ const [signedIn,setSignedIn]=useState(false);
+ const [checking,setChecking]=useState(true);
+ const [guest,setGuest]=useState(guestChosen);
+ React.useEffect(()=>{
+  let active=true;let unsubscribe:(()=>void)|undefined;
+  import('./account-service').then(({configuredAccountClient})=>{
+   if(!active)return;const client=configuredAccountClient();
+   if(!client){setChecking(false);return;}
+   client.auth.getSession().then(({data})=>{if(active){setSignedIn(Boolean(data.session));setChecking(false);}}).catch(()=>{if(active)setChecking(false);});
+   const {data}=client.auth.onAuthStateChange((_event,session)=>{if(active){setSignedIn(Boolean(session));setChecking(false);}});
+   unsubscribe=()=>data.subscription.unsubscribe();
+  }).catch(()=>{if(active)setChecking(false);});
+  return()=>{active=false;unsubscribe?.();};
+ },[]);
+ const continueAsGuest=()=>{try{sessionStorage.setItem(guestKey,'true');}catch{}setGuest(true);};
+ const loading=<div style={{background:'#0b0b0c',color:'#efeee8',minHeight:'100vh',padding:32}} role="status">Opening your space...</div>;
+ const account=<React.Suspense fallback={loading}><AccountPage onGuest={continueAsGuest}/></React.Suspense>;
+ const entry=checking?loading:(signedIn||guest?<Gallery signedIn={signedIn}/>:account);
+ return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/></Routes>;
+}
