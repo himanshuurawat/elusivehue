@@ -62,6 +62,52 @@ function DepthScene({ pageFlow = false }: { pageFlow?: boolean }) {
     </div>;
 }
 
+function ArtistListing({onClose}: {onClose:()=>void}) {
+    const dialog=React.useRef<HTMLDialogElement>(null);
+    const input=React.useRef<HTMLInputElement>(null);
+    const [photo,setPhoto]=useState('');
+    const [title,setTitle]=useState('');
+    const [medium,setMedium]=useState('');
+    const [format,setFormat]=useState('Physical');
+    const [size,setSize]=useState('Medium');
+    const [width,setWidth]=useState('');
+    const [height,setHeight]=useState('');
+    const [price,setPrice]=useState('');
+    const [error,setError]=useState('');
+    const [preview,setPreview]=useState(false);
+    React.useEffect(()=>{const el=dialog.current,previous=document.activeElement as HTMLElement|null;el?.showModal();return()=>{el?.close();previous?.focus();};},[]);
+    React.useEffect(()=>()=>{if(photo.startsWith('blob:'))URL.revokeObjectURL(photo);},[photo]);
+    const valid=()=>{
+        if(!photo)return 'Choose a photo or use the sample artwork first.';
+        if(!title.trim())return 'Give your artwork a title.';
+        if(!medium.trim())return 'Add the art medium, such as oil on canvas.';
+        if(!/^\d+(\.\d{1,2})?$/.test(width)||!/^\d+(\.\d{1,2})?$/.test(height)||Number(width)<=0||Number(height)<=0||Number(width)>100000||Number(height)>100000)return 'Enter width and height above zero, up to 100,000 each.';
+        if(format==='Digital'&&(!/^\d+$/.test(width)||!/^\d+$/.test(height)))return 'Use whole pixels for digital artwork dimensions.';
+        if(!/^\d+$/.test(price)||Number(price)<1||Number(price)>10000000)return 'Enter a whole-rupee price between ₹1 and ₹1,00,00,000.';
+        return '';
+    };
+    const show=()=>{const message=valid();setError(message);if(message){dialog.current?.querySelector('.listing-error')?.scrollIntoView({block:'center'});return;}setPreview(true);dialog.current?.scrollTo({top:0});};
+    const sample=()=>{setPhoto(artEmber);setTitle('Evening study');setMedium('Oil on canvas');setFormat('Physical');setSize('Large');setWidth('60');setHeight('80');setPrice('18500');setError('');if(input.current)input.current.value='';};
+    const pick=(file?:File)=>{
+        if(!file)return;
+        if(!['image/jpeg','image/png','image/webp'].includes(file.type)){setError('Choose a JPG, PNG or WebP photo.');if(input.current)input.current.value='';return;}
+        if(file.size>8*1024*1024){setError('Choose a photo smaller than 8 MB.');if(input.current)input.current.value='';return;}
+        setPhoto(URL.createObjectURL(file));setError('');
+    };
+    const units=format==='Physical'?'cm':'px';
+    return <dialog ref={dialog} className="listing-dialog" aria-label="List an artwork demo" onCancel={e=>{e.preventDefault();onClose();}} onClick={e=>{if(e.target===e.currentTarget)onClose();}} onKeyDown={e=>{
+        if(e.key!=='Tab')return;const nodes=[...e.currentTarget.querySelectorAll<HTMLElement>('button,input,select,textarea,[tabindex="0"]')].filter(el=>!el.hasAttribute('disabled')&&el.getClientRects().length>0);const first=nodes[0],last=nodes[nodes.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}
+    }}><div className="listing-shell">
+        <div className="listing-top"><span className="kicker">Elusive Hue / Artist studio</span><button type="button" onClick={onClose} aria-label="Close listing demo">Close ×</button></div>
+        <header className="listing-heading"><p className="kicker">{preview?'02 / Buyer-facing preview':'01 / Your artwork'}</p><h2 className="display">{preview?'See it through their eyes.':'Make room for your work.'}</h2><p>{preview?'This is how your artwork could appear to a buyer.':'A photo, a few details, your price. Then see your listing take shape.'}</p></header>
+        <p className="listing-notice">Demo only. Your photo stays in this browser session. Nothing is uploaded, saved or published. Closing this studio clears the draft.</p>
+        {preview?<section className="listing-preview" aria-label="Buyer-facing listing preview"><div className="listing-image"><img src={photo} alt={title.trim()} /></div><div className="listing-preview-copy"><span className="kicker">Unpublished preview / {format} artwork</span><h3 className="display">{title.trim()}</h3><p className="listing-asking">₹{Number(price).toLocaleString('en-IN')}<span>Asking price · preview only</span></p><dl><div><dt>Art medium</dt><dd>{medium.trim()}</dd></div><div><dt>Size class</dt><dd>{size}</dd></div><div><dt>Width × height</dt><dd>{width} × {height} {units}</dd></div></dl><p className="listing-small">Details from this draft, not a verified or live listing. No buyer can see or buy this preview.</p><button type="button" className="listing-primary" onClick={()=>{setPreview(false);setError('');dialog.current?.scrollTo({top:0});}}>Edit details</button><button type="button" onClick={onClose}>Done · close demo</button></div></section>:<form className="listing-form" noValidate onSubmit={e=>{e.preventDefault();show();}}>
+            <div className="listing-photo-panel"><div className={`listing-image${photo?'':' empty'}`}>{photo?<img src={photo} alt="Selected artwork preview" onError={()=>{setPhoto('');setError('That image could not be opened. Try another JPG, PNG or WebP.');}}/>:<div><span aria-hidden="true">＋</span><p>Your artwork goes here.</p><small>JPG, PNG or WebP · up to 8 MB</small></div>}</div><label className="listing-file">Choose a photo<input ref={input} type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>pick(e.target.files?.[0])}/></label><button type="button" onClick={sample}>Use sample artwork + details</button>{photo&&<button type="button" onClick={()=>{setPhoto('');if(input.current)input.current.value='';}}>Remove photo</button>}</div>
+            <div className="listing-fields"><label>Artwork title<input value={title} onChange={e=>setTitle(e.target.value)} maxLength={100} placeholder="Give your piece a name"/></label><div className="listing-field-row"><label>Format<select value={format} onChange={e=>setFormat(e.target.value)}><option>Physical</option><option>Digital</option></select></label><label>Size class<select value={size} onChange={e=>setSize(e.target.value)}><option>Small</option><option>Medium</option><option>Large</option></select></label></div><label>Art medium<input value={medium} onChange={e=>setMedium(e.target.value)} maxLength={100} placeholder={format==='Physical'?'e.g. Oil on canvas':'e.g. Digital illustration'}/></label><div className="listing-field-row"><label>Width · {units}<input inputMode="decimal" value={width} onChange={e=>setWidth(e.target.value)} maxLength={9} placeholder="Width"/></label><label>Height · {units}<input inputMode="decimal" value={height} onChange={e=>setHeight(e.target.value)} maxLength={9} placeholder="Height"/></label></div><p className="listing-small">{format==='Physical'?'Artwork dimensions in centimetres, without a frame. Size class is your label, not an automatic measurement.':'Digital canvas dimensions in whole pixels, not a physical print size. Size class is your label.'}</p><label>Asking price · INR<input inputMode="numeric" value={price} onChange={e=>setPrice(e.target.value)} maxLength={8} placeholder="Your price in rupees"/></label>{error&&<p className="listing-error" role="alert">{error}</p>}<button type="submit" className="listing-primary" onClick={e=>{e.preventDefault();show();}}>Preview listing ↗</button><p className="listing-small">Preview only. There is no publish button in this demo.</p></div>
+        </form>}
+    </div></dialog>;
+}
+
 function OfferDemo({work}: {work: typeof works[number]}) {
     const [open,setOpen]=useState(false);
     const [amount,setAmount]=useState('');
@@ -230,6 +276,7 @@ function useGalleryMotion(root: React.RefObject<HTMLDivElement | null>, changing
 function Gallery({ still = false }: { still?: boolean }) {
     const [alt, setAlt] = useState(false);
     const [filter, setFilter] = useState('All works');
+    const [listingOpen,setListingOpen]=useState(false);
     const galleryRoot = React.useRef<HTMLDivElement>(null);
     useGalleryMotion(galleryRoot, filter);
     const [selected, setSelected] = useState<typeof works[number] | null>(null);
@@ -268,6 +315,7 @@ function Gallery({ still = false }: { still?: boolean }) {
                 </button>)}
             </div>
         </section>
+        <section className="g-section listing-invite"><div><p className="kicker">For the artist</p><h2 className="display">Your work belongs here.</h2><p>Try building a listing, then see it from the buyer's side.</p></div><button type="button" className="gallery-cta" onClick={()=>setListingOpen(true)}>List an artwork · demo ↗</button></section>
         <section className="g-section">
             <div className="g-feature"><div className="feature-image"><img src={artFigure} alt="Movement III, illustrative charcoal figure study" loading="lazy" /></div><div className="scroll-reveal">
                 <p className="kicker">02 / A closer look</p><h3 className="display">A study<br />in movement.</h3>
@@ -278,6 +326,7 @@ function Gallery({ still = false }: { still?: boolean }) {
         <div id="secondhand"><ResaleShelf /></div>
         <section className="g-section project-note"><p className="kicker">The idea behind Elusive Hue</p><h2 className="display">Room for art.<br />Room for stories.</h2><p>A planned home for physical artwork and digital editions, with a separate shelf for personal belongings. The two collections stay distinct.</p><details><summary>What works in this preview?</summary><p>Browse the artwork, filter physical and digital pieces, open full-image and detail-crop views, switch the theme and explore the layered scroll scene. All content is illustrative. There are no accounts, orders, payments or seller services.</p></details></section>
         <footer className="g-foot"><Wordmark /><p className="meta">Midnight Gallery / selected direction. Frontend preview only. All artworks, artists, mediums, prices and resale items are dummy content. Nothing is for sale here.</p><button className="text-link" type="button" onClick={() => jump('gallery-top')}>Back to the top ↑</button></footer>
+        {listingOpen&&<ArtistListing onClose={()=>setListingOpen(false)}/>}
         <ArtworkPreview work={selected} onClose={() => setSelected(null)} />
     </div>;
 }
