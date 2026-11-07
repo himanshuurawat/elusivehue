@@ -101,3 +101,9 @@ this must be explained and tested before a public release.
 The account page includes the accepted rounded sign-in design and first-tap surface wave. Authentication is disabled unless `VITE_ENABLE_AUTH=true` and the approved Supabase URL/publishable key are supplied at build time. Without those settings it makes no auth requests and labels itself a design preview. Google sign-in and password recovery remain unavailable until their configuration and return flows are complete. No service-role key or database password belongs in this frontend.
 
 Profile and own-artwork service code and the database migration are included for integration testing. The public gallery, sample artwork, local-only artist listing preview and bargaining demo are not real inventory, saved listings, offers or purchases. Live account/data-isolation testing is a separate release gate.
+
+### Google sign-in staging (not released)
+
+`VITE_ENABLE_GOOGLE_AUTH` is a separate opt-in and defaults OFF. Keep it unset in Production. Set it to `true` only on the approved auth-preview build after the separate Elusive Hue OAuth client and provider are ready for the approved test. `VITE_ENABLE_AUTH` and the same-origin `VITE_AUTH_RETURN_URL` remain required. Google requests only openid, email and profile; no Gmail or Drive scopes. Never put the OAuth client secret in Vite configuration or browser source. The secret belongs only in Supabase's Google provider configuration.
+
+A Google login without an existing profile opens the editable profile form with an empty username for the user to choose. It does not auto-publish a profile or artwork. Actual Google testing creates an auth user and needs its own test-data approval and cleanup. Merge, production flag changes, Google app publication and a public release remain separate gates.
