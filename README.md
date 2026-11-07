@@ -54,3 +54,50 @@ The artist studio demo lets you choose a local photo or sample artwork, enter ti
 The upper depth sequence completes on a pinned track, then its foreground moves upward to reveal the lower scene already underneath. The lower three-artwork spread remains scroll-linked and reversible, followed by collection reveals and the crop-to-full-image feature transition.
 
 The earlier separate decorative paper strip has been removed. One scroll surface drives the upper sequence, the connecting handoff and the lower spread directly, without competing transition timers or extra animation dependencies. Reduced-motion preference presents both scenes as static content. This is still a visual prototype, not a physical-device performance guarantee.
+
+## Account/profile work in progress
+
+`account-profile-work` is a separate, non-deployment branch. Do not merge it or
+point production hosting at it before review. The accepted `frontend-demos`
+branch is unchanged.
+
+`#/account` defaults to a visual-only design preview. Without explicitly enabled
+Supabase environment configuration, no client is created and form submissions
+only show a preview notice. Google sign-in is disabled. Do not enter a real
+password in the design preview. Guarded email sign-in/signup and own-profile
+read/save code are prepared, but have not been run against real accounts.
+Password recovery sending stays disabled until its return page is configured.
+
+The new isolated Supabase project has the schema in
+`backend/001_accounts_artworks.sql`. Both public tables have row-level security.
+Profile reads/writes are owner-only. Artwork drafts are owner-only; published
+artwork records and their associated images can be read publicly. The image
+bucket is private, accepts JPG/PNG/WebP up to 8MB, and limits mutations to the
+user's own UUID folder. Owner/id/timestamp columns are not client-updatable.
+
+Before connecting the account UI:
+- Review the visual design.
+- Configure the project's public browser key and URL through environment values.
+  Never use the service-role key or database password in frontend code.
+- Resolve the email sender and exact signup/recovery callback origin.
+- Configure Google OAuth separately, including its client and exact callback.
+- Review privacy/terms, confirmation and account recovery flows before public signup.
+- Get approval for temporary test accounts/data, then test two-user isolation,
+  auth confirmation/recovery, photo ownership and signed-URL behavior end to end.
+- Cloudflare deployment and a main merge remain separate, paused steps.
+
+Preparatory service configuration (not active in the design preview):
+`VITE_ENABLE_AUTH=true`, `VITE_SUPABASE_URL`, and
+`VITE_SUPABASE_PUBLISHABLE_KEY`. Leave these unset while reviewing visuals.
+
+The service module supports own-profile read/save, own-artwork lists and drafts,
+explicit-field artwork edits, photo upload and short-lived preview URLs. There
+is no public publish action, payment flow, or email/Google setup in this branch.
+Signed URLs can remain usable until their five-minute expiry after unpublishing;
+this must be explained and tested before a public release.
+
+## Accounts: staged setup
+
+The account page includes the accepted rounded sign-in design and first-tap surface wave. Authentication is disabled unless `VITE_ENABLE_AUTH=true` and the approved Supabase URL/publishable key are supplied at build time. Without those settings it makes no auth requests and labels itself a design preview. Google sign-in and password recovery remain unavailable until their configuration and return flows are complete. No service-role key or database password belongs in this frontend.
+
+Profile and own-artwork service code and the database migration are included for integration testing. The public gallery, sample artwork, local-only artist listing preview and bargaining demo are not real inventory, saved listings, offers or purchases. Live account/data-isolation testing is a separate release gate.
