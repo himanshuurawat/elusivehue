@@ -1,13 +1,21 @@
 import {createClient,type SupabaseClient} from '@supabase/supabase-js';
 
-// Preparatory module. Not imported by the design preview and disabled by default.
+// Disabled by default. Only the approved project URL and public browser key belong here.
 // Never put a service-role key or a database password in browser configuration.
 export function configuredAccountClient(): SupabaseClient|null {
  const url=import.meta.env.VITE_SUPABASE_URL;
  const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
  if(import.meta.env.VITE_ENABLE_AUTH!=='true'||!url||!key)return null;
- if(!/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(url))throw new Error('Use the approved Supabase project URL.');
- return createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+ if(url!=='https://vljgcrbcncryyeztowrp.supabase.co')throw new Error('Use the approved Supabase project URL.');
+ return createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
+}
+export function authReturnUrl(recovery=false):string {
+ const raw=import.meta.env.VITE_AUTH_RETURN_URL;
+ if(!raw)throw new Error('Account confirmation is not configured yet.');
+ const url=new URL(raw);
+ if(url.origin!==location.origin||url.pathname!=='/auth/callback'||url.hash||url.search||(url.protocol!=='https:'&&url.hostname!=='127.0.0.1'&&url.hostname!=='localhost'))throw new Error('The account return URL must match this site.');
+ if(recovery)url.searchParams.set('flow','recovery');
+ return url.toString();
 }
 export type Profile={id:string;username:string|null;display_name:string;bio:string};
 export type ProfileFields=Pick<Profile,'username'|'display_name'|'bio'>;
