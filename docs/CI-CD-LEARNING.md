@@ -45,9 +45,11 @@ node --test tests/build-smoke.test.mjs
 
 The tests require `dist` from the build. They do not query a live website.
 
-## Hands-on pass/fail exercise
+## Optional hands-on pass/fail exercise
 
-Do this only on a separate learning branch, never on `main`:
+Results should first be reviewed and explained by the project maintainer. The user does not need to inspect logs or run this exercise to receive support. Manual UI, flow and bug checks continue alongside CI.
+
+For optional hands-on practice, do this only on a separate learning branch, never on `main`:
 
 1. Open the pull request's Checks tab. Read the commit SHA and each green step.
 2. Explain what each of the three commands does before making an edit.
@@ -60,9 +62,9 @@ A test-file edit may still trigger Cloudflare's independent branch preview build
 
 ## Resume wording
 
-Only after you have run and explained the exercise yourself, a narrow, truthful starting point is:
+After reviewing the real pass/fail results and understanding the setup, a narrow, truthful starting point is:
 
-> Configured GitHub Actions CI for a React/TypeScript project with locked dependency installation, type checking, production builds and built-output smoke tests; investigated a failing check and verified the fix.
+> Configured GitHub Actions CI for a React/TypeScript project with locked dependency installation, type checking, production builds and built-output smoke tests.
 
 Add Cloudflare deployment experience only after reviewing the actual deployment path yourself. Do not claim browser E2E coverage, enforced release gates, zero-downtime releases or production delivery by this Actions workflow.
 
