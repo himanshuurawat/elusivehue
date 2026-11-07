@@ -69,10 +69,11 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
     const [view,setView] = useState('Full artwork');
     const [tilt,setTilt] = useState(0);
     const [direction,setDirection] = useState(1);
+    const [moving,setMoving] = useState(true);
     const drag = React.useRef<{x:number;angle:number}|null>(null);
     const finishes = [{name:'Bare',tone:'#191b1b',edge:'transparent'},{name:'Oak',tone:'#343027',edge:'#a1815e'},{name:'Ink',tone:'#17282a',edge:'#111a1c'}];
     React.useEffect(() => {
-        setFinish(0);setView('Full artwork');setTilt(0);
+        setMoving(true);setFinish(0);setView('Full artwork');setTilt(0);
         if(work && !dialog.current?.open) {dialog.current?.showModal();dialog.current?.querySelector<HTMLButtonElement>('.product-close')?.focus({preventScroll:true});if(dialog.current)dialog.current.scrollTop=0;}
         if(!work && dialog.current?.open)dialog.current.close();
     },[work]);
@@ -99,20 +100,21 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
             <div className={`product-showcase view-${viewIndex}`}>
                 <div className="product-scene-sweep" key={`sweep-${view}-${finish}`} aria-hidden="true"/>
                 <div className="product-chapter-nav" aria-hidden="true"><span className={viewIndex===0?'active':''}>01 / Composition</span><span className={viewIndex===1?'active':''}>02 / Perspective</span><span className={viewIndex===2?'active':''}>03 / Detail</span></div>
-                <div className={`product-stage${view==='Detail crop'?' is-detail':''}`}>
+                <div className={`product-stage${view==='Detail crop'?' is-detail':''}${moving?' is-moving':''}`}>
+                    <div className="product-orbit-points" key={`points-${view}`} aria-label="Artwork quick details"><div className="orbit-point point-artist"><span>Artist</span><strong>{current.artist}</strong></div><div className="orbit-point point-type"><span>Format</span><strong>{current.kind.split(' · ')[0]}</strong></div><div className="orbit-point point-medium"><span>Medium</span><strong>{current.kind.split(' · ').pop()}</strong></div><div className="orbit-point point-view"><span>View study</span><strong>{view==='Detail crop'?'Image close-up':view==='Angled view'?'Angled image':'Full composition'}</strong></div></div>
                     <span className="product-word" aria-hidden="true">{current.title.split(' ')[0]}</span>
                     <button type="button" className="product-neighbor neighbor-before" onClick={()=>change(-1)} aria-label={`Previous view: ${before}`}><img className={before==='Detail crop'?'neighbor-crop':before==='Angled view'?'neighbor-angle':''} src={current.img} alt="" /><span>← {before}</span></button>
                     <div key={`${current.title}-${view}-${finish}`} className="product-object" style={{'--angle':`${angle}deg`,'--zoom':view==='Detail crop'?'1.65':'1'} as React.CSSProperties}
                         onPointerDown={e=>{if(e.button!==0||view==='Detail crop')return;drag.current={x:e.clientX,angle:tilt};e.currentTarget.setPointerCapture(e.pointerId);}}
                         onPointerMove={e=>{if(drag.current)setTilt(Math.max(-28,Math.min(28,drag.current.angle+(e.clientX-drag.current.x)*.18)));}}
                         onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}>
-                        <div className={`product-frame finish-${finish}`}><img src={current.img} alt={`${current.title}, illustrative artwork`} draggable={false}/></div>
+                        <div className={`product-frame finish-${finish}`}><div className="product-depth"><img src={current.img} alt={`${current.title}, illustrative artwork`} draggable={false}/></div></div>
                     </div>
                     <button type="button" className="product-neighbor neighbor-after" onClick={()=>change(1)} aria-label={`Next view: ${after}`}><img className={after==='Detail crop'?'neighbor-crop':after==='Angled view'?'neighbor-angle':''} src={current.img} alt=""/><span>{after} →</span></button>
                     <span className="product-ground" aria-hidden="true"/>
                     <div className="product-stage-caption"><span>View {String(viewIndex+1).padStart(2,'0')} / 03</span><span>{view==='Detail crop'?'A closer look at the same image':'Drag artwork to change perspective'}</span></div>
                 </div>
-                <div className="product-view-notes" key={`notes-${view}`} aria-live="polite"><span className="product-note-number">0{viewIndex+1}</span><div><p className="kicker">{viewIndex===0?'THE WHOLE PICTURE':viewIndex===1?'A CHANGE IN PERSPECTIVE':'INSIDE THE IMAGE'}</p><h3 className="display">{viewIndex===0?'Every mark, together.':viewIndex===1?'Let the light move.':'Closer to the surface.'}</h3><p>{viewIndex===0?`${current.artist} / ${current.kind.split(' · ').pop()}. Explore the full composition before moving closer.`:viewIndex===1?'Drag the image to shift its perspective. A flat-image display study, not a physical side view.':'An enlarged crop of this same image. Follow the edges, colour and marks, then return to the whole artwork.'}</p></div><span className="product-note-rule" aria-hidden="true"/></div>
+                <div className="product-mini-notes" key={`notes-${view}`}><span>0{viewIndex+1} / {view==='Detail crop'?'Inside the image':view==='Angled view'?'A different perspective':'The whole picture'}</span><button type="button" className="product-motion-toggle" aria-pressed={!moving} onClick={()=>setMoving(!moving)}>{moving?'Pause motion':'Resume motion'}</button></div>
                 <div className="product-summary" aria-live="polite"><div><p className="kicker">{current.kind.split(' · ')[0]} / {current.artist}</p><h2 className="display">{current.title}</h2></div><div className="product-buyless"><strong>{current.price}</strong><span>Illustrative price</span></div></div>
                 <div className="product-toolbar"><div className="product-buttons" aria-label="Artwork view">{views.map(v=><button type="button" key={v} aria-pressed={view===v} onClick={()=>{setDirection(views.indexOf(v)>=viewIndex?1:-1);setView(v);setTilt(0);}}>{v}</button>)}</div><div className="product-finishes" aria-label="Display frame">{finishes.map((v,i)=><button type="button" key={v.name} aria-label={`${v.name} display`} aria-pressed={finish===i} onClick={()=>{setDirection(1);setFinish(i);}}><span style={{background:i===0?'#777':v.edge}}/>{v.name}</button>)}</div></div>
                 <button type="button" className="product-details-link" onClick={()=>dialog.current?.querySelector('.product-story')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})}>Look a little closer <span>↓</span></button>
