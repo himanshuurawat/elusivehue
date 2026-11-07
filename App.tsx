@@ -68,6 +68,7 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
     const [finish,setFinish] = useState(0);
     const [view,setView] = useState('Full artwork');
     const [tilt,setTilt] = useState(0);
+    const [direction,setDirection] = useState(1);
     const drag = React.useRef<{x:number;angle:number}|null>(null);
     const finishes = [{name:'Bare',tone:'#191b1b',edge:'transparent'},{name:'Oak',tone:'#343027',edge:'#a1815e'},{name:'Ink',tone:'#17282a',edge:'#111a1c'}];
     React.useEffect(() => {
@@ -75,9 +76,16 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
         if(work && !dialog.current?.open) {dialog.current?.showModal();dialog.current?.querySelector<HTMLButtonElement>('.product-close')?.focus({preventScroll:true});if(dialog.current)dialog.current.scrollTop=0;}
         if(!work && dialog.current?.open)dialog.current.close();
     },[work]);
+    React.useEffect(() => {
+        if(!work || !dialog.current)return;
+        const root=dialog.current;
+        const observer=new IntersectionObserver(entries=>entries.forEach(entry=>entry.target.classList.toggle('chapter-visible',entry.isIntersecting)),{root,threshold:.16});
+        root.querySelectorAll('.product-feature,.product-story-intro').forEach(el=>observer.observe(el));
+        return ()=>observer.disconnect();
+    },[work]);
     const current=work || works[0], index=works.indexOf(current), viewIndex=views.indexOf(view);
     const before=views[(viewIndex+views.length-1)%views.length], after=views[(viewIndex+1)%views.length];
-    const change=(step:number)=>{setView(views[(viewIndex+step+views.length)%views.length]);setTilt(0);};
+    const change=(step:number)=>{setDirection(step);setView(views[(viewIndex+step+views.length)%views.length]);setTilt(0);};
     const angle=view==='Detail crop'?0:tilt+(view==='Angled view'?-22:0);
     return <dialog ref={dialog} className="art-dialog product-dialog" aria-label={work ? `${current.title} artwork view`:'Artwork view'} onClose={onClose} onKeyDown={e=>{
         if(e.key!=='Tab')return;
@@ -86,13 +94,15 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
         if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}
         if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}
     }}>
-        {work && <div className="product-world" style={{'--product-tone':finishes[finish].tone,'--frame-tone':finishes[finish].edge} as React.CSSProperties}>
+        {work && <div className="product-world" style={{'--product-tone':finishes[finish].tone,'--frame-tone':finishes[finish].edge,'--entry':`${direction*42}px`,'--scene-tone':view==='Detail crop'?'#26302d':view==='Angled view'?'#292b32':finishes[finish].tone} as React.CSSProperties}>
             <div className="product-top"><span className="kicker">Elusive Hue / Viewing room</span><button type="button" className="product-close" aria-label="Close artwork preview" onClick={onClose}>Close ×</button></div>
-            <div className="product-showcase">
+            <div className={`product-showcase view-${viewIndex}`}>
+                <div className="product-scene-sweep" key={`sweep-${view}-${finish}`} aria-hidden="true"/>
+                <div className="product-chapter-nav" aria-hidden="true"><span className={viewIndex===0?'active':''}>01 / Composition</span><span className={viewIndex===1?'active':''}>02 / Perspective</span><span className={viewIndex===2?'active':''}>03 / Detail</span></div>
                 <div className={`product-stage${view==='Detail crop'?' is-detail':''}`}>
                     <span className="product-word" aria-hidden="true">{current.title.split(' ')[0]}</span>
                     <button type="button" className="product-neighbor neighbor-before" onClick={()=>change(-1)} aria-label={`Previous view: ${before}`}><img className={before==='Detail crop'?'neighbor-crop':before==='Angled view'?'neighbor-angle':''} src={current.img} alt="" /><span>← {before}</span></button>
-                    <div key={current.title} className="product-object" style={{'--angle':`${angle}deg`,'--zoom':view==='Detail crop'?'1.65':'1'} as React.CSSProperties}
+                    <div key={`${current.title}-${view}-${finish}`} className="product-object" style={{'--angle':`${angle}deg`,'--zoom':view==='Detail crop'?'1.65':'1'} as React.CSSProperties}
                         onPointerDown={e=>{if(e.button!==0||view==='Detail crop')return;drag.current={x:e.clientX,angle:tilt};e.currentTarget.setPointerCapture(e.pointerId);}}
                         onPointerMove={e=>{if(drag.current)setTilt(Math.max(-28,Math.min(28,drag.current.angle+(e.clientX-drag.current.x)*.18)));}}
                         onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}>
@@ -102,12 +112,13 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
                     <span className="product-ground" aria-hidden="true"/>
                     <div className="product-stage-caption"><span>View {String(viewIndex+1).padStart(2,'0')} / 03</span><span>{view==='Detail crop'?'A closer look at the same image':'Drag artwork to change perspective'}</span></div>
                 </div>
+                <div className="product-view-notes" key={`notes-${view}`} aria-live="polite"><span className="product-note-number">0{viewIndex+1}</span><div><p className="kicker">{viewIndex===0?'THE WHOLE PICTURE':viewIndex===1?'A CHANGE IN PERSPECTIVE':'INSIDE THE IMAGE'}</p><h3 className="display">{viewIndex===0?'Every mark, together.':viewIndex===1?'Let the light move.':'Closer to the surface.'}</h3><p>{viewIndex===0?`${current.artist} / ${current.kind.split(' · ').pop()}. Explore the full composition before moving closer.`:viewIndex===1?'Drag the image to shift its perspective. A flat-image display study, not a physical side view.':'An enlarged crop of this same image. Follow the edges, colour and marks, then return to the whole artwork.'}</p></div><span className="product-note-rule" aria-hidden="true"/></div>
                 <div className="product-summary" aria-live="polite"><div><p className="kicker">{current.kind.split(' · ')[0]} / {current.artist}</p><h2 className="display">{current.title}</h2></div><div className="product-buyless"><strong>{current.price}</strong><span>Illustrative price</span></div></div>
-                <div className="product-toolbar"><div className="product-buttons" aria-label="Artwork view">{views.map(v=><button type="button" key={v} aria-pressed={view===v} onClick={()=>{setView(v);setTilt(0);}}>{v}</button>)}</div><div className="product-finishes" aria-label="Display frame">{finishes.map((v,i)=><button type="button" key={v.name} aria-label={`${v.name} display`} aria-pressed={finish===i} onClick={()=>setFinish(i)}><span style={{background:i===0?'#777':v.edge}}/>{v.name}</button>)}</div></div>
+                <div className="product-toolbar"><div className="product-buttons" aria-label="Artwork view">{views.map(v=><button type="button" key={v} aria-pressed={view===v} onClick={()=>{setDirection(views.indexOf(v)>=viewIndex?1:-1);setView(v);setTilt(0);}}>{v}</button>)}</div><div className="product-finishes" aria-label="Display frame">{finishes.map((v,i)=><button type="button" key={v.name} aria-label={`${v.name} display`} aria-pressed={finish===i} onClick={()=>{setDirection(1);setFinish(i);}}><span style={{background:i===0?'#777':v.edge}}/>{v.name}</button>)}</div></div>
                 <button type="button" className="product-details-link" onClick={()=>dialog.current?.querySelector('.product-story')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})}>Look a little closer <span>↓</span></button>
             </div>
             <section className="product-story" aria-label="Artwork details">
-                <div className="product-story-intro"><p className="kicker">Beyond the first look</p><h3 className="display">Made of details.</h3><p>An image study in two parts.</p></div>
+                <div className="product-story-intro"><p className="kicker">Beyond the first look</p><h3 className="display">Made of details.</h3><p>Scroll through the image. From the smallest marks to the complete composition.</p></div>
                 <div className="product-feature"><div className="product-feature-image texture-crop"><img src={current.img} alt={`Enlarged image detail of ${current.title}`} loading="lazy"/></div><div className="product-feature-copy"><span className="kicker">01 / A closer crop</span><h4 className="display">Look at the marks.</h4><p>A magnified section of the artwork image. Explore its colour, edges and texture.</p><button type="button" onClick={()=>{setView('Detail crop');if(dialog.current)dialog.current.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});}}>Open detail view ↗</button></div></div>
                 <div className="product-feature feature-reverse"><div className="product-feature-image"><img src={current.img} alt={`${current.title} full image study`} loading="lazy"/></div><div className="product-feature-copy"><span className="kicker">02 / The whole picture</span><h4 className="display">A different perspective.</h4><dl><div><dt>Artist</dt><dd>{current.artist}</dd></div><div><dt>Medium</dt><dd>{current.kind.split(' · ').pop()}</dd></div><div><dt>Collection</dt><dd>{String(index+1).padStart(2,'0')} of 06</dd></div></dl></div></div>
                 <p className="product-disclaimer">Illustrative concept only. Artwork, artists, mediums and prices are dummy content. Perspective uses a flat image, not a 3D scan. Display frames are visual studies, not purchase options. Nothing is for sale.</p>
