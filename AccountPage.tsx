@@ -1,5 +1,5 @@
 import React, {useEffect,useRef,useState} from 'react';
-import {Link} from 'react-router-dom';
+import {Link,useLocation} from 'react-router-dom';
 import {artFigure,artCollage,artContour} from './artwork';
 import './account.css';
 import {configuredAccountClient,authReturnUrl} from './account-service';
@@ -10,8 +10,11 @@ const client=configuredAccountClient();
 const googleEnabled=Boolean(client)&&import.meta.env.VITE_ENABLE_GOOGLE_AUTH==='true';
 
 type Mode='login'|'signup'|'reset'|'update';
-export function AccountPage(){
- const [mode,setMode]=useState<Mode>('login');
+export function AccountPage({onGuest}:{onGuest:()=>void}){
+ const location=useLocation();
+ const requestedMode=new URLSearchParams(location.search).get('mode')==='signup'?'signup':'login';
+ const [mode,setMode]=useState<Mode>(requestedMode);
+ useEffect(()=>{if(!recovering)setMode(requestedMode);},[requestedMode]);
  const [show,setShow]=useState(false);
  const [recovering,setRecovering]=useState(false);
  const [message,setMessage]=useState('');
@@ -64,7 +67,7 @@ export function AccountPage(){
   <div className="page-water-ripples" aria-hidden="true">{pageRipples.map(r=><div key={r.id} className="page-water-drop" style={{left:r.x,top:r.y,width:r.size,height:r.size} as React.CSSProperties} onAnimationEnd={e=>{if(e.target===e.currentTarget)setPageRipples(previous=>previous.filter(item=>item.id!==r.id));}}><i/><i/><i/></div>)}</div>
   {surfaceWave&&<svg className="wave-filter-defs" aria-hidden="true"><defs><filter colorInterpolationFilters="sRGB" id="account-surface-water" x="-2%" y="-2%" width="104%" height="104%"><feImage ref={waveMap} result="water" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none"/><feGaussianBlur in="water" stdDeviation="8" result="smoothWater"/><feGaussianBlur in="SourceGraphic" stdDeviation="0.5" result="softSource"/><feDisplacementMap in="softSource" in2="smoothWater" scale="6" xChannelSelector="R" yChannelSelector="G" result="bent"/><feGaussianBlur in="bent" stdDeviation="0.5" result="refracted"/><feColorMatrix in="smoothWater" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0" result="bandMask"/><feComposite in="refracted" in2="bandMask" operator="in" result="crest"/><feComposite in="SourceGraphic" in2="bandMask" operator="out" result="still"/><feMerge><feMergeNode in="still"/><feMergeNode in="crest"/></feMerge></filter></defs></svg>}
   <div ref={surface} className={`account-surface${surfaceWave?' surface-wave-active':''}`}>
-  <header className="account-nav"><Link to="/" className="account-logo" aria-label="Elusive Hue home">elusive<span>·</span>hue</Link><Link to="/">Back to the collection ↗</Link></header>
+  <header className="account-nav"><Link to="/" onClick={onGuest} className="account-logo" aria-label="Elusive Hue home">elusive<span>·</span>hue</Link><Link to="/" onClick={onGuest}>{session?'Back to the collection ↗':'Continue as guest ↗'}</Link></header>
   <div className="account-layout">
    <section className="account-art" ref={stage} onPointerMove={move} onPointerLeave={e=>{e.currentTarget.style.setProperty('--mx','0');e.currentTarget.style.setProperty('--my','0');}} aria-label="Layered art composition">
     <span className="account-eyebrow">A space for a different perspective</span>
