@@ -64,19 +64,20 @@ function DepthScene({ pageFlow = false }: { pageFlow?: boolean }) {
 
 function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onClose: () => void}) {
     const dialog = React.useRef<HTMLDialogElement>(null);
-    const [index,setIndex] = useState(0);
+    const views = ['Full artwork','Angled view','Detail crop'];
     const [finish,setFinish] = useState(0);
     const [view,setView] = useState('Full artwork');
     const [tilt,setTilt] = useState(0);
     const drag = React.useRef<{x:number;angle:number}|null>(null);
     const finishes = [{name:'Bare',tone:'#191b1b',edge:'transparent'},{name:'Oak',tone:'#343027',edge:'#a1815e'},{name:'Ink',tone:'#17282a',edge:'#111a1c'}];
     React.useEffect(() => {
-        setIndex(work ? works.indexOf(work) : 0);setFinish(0);setView('Full artwork');setTilt(0);
+        setFinish(0);setView('Full artwork');setTilt(0);
         if(work && !dialog.current?.open) {dialog.current?.showModal();dialog.current?.querySelector<HTMLButtonElement>('.product-close')?.focus({preventScroll:true});if(dialog.current)dialog.current.scrollTop=0;}
         if(!work && dialog.current?.open)dialog.current.close();
     },[work]);
-    const current=works[index], before=works[(index+works.length-1)%works.length], after=works[(index+1)%works.length];
-    const change=(step:number)=>{setIndex(i=>(i+step+works.length)%works.length);setTilt(0);setView('Full artwork');};
+    const current=work || works[0], index=works.indexOf(current), viewIndex=views.indexOf(view);
+    const before=views[(viewIndex+views.length-1)%views.length], after=views[(viewIndex+1)%views.length];
+    const change=(step:number)=>{setView(views[(viewIndex+step+views.length)%views.length]);setTilt(0);};
     const angle=view==='Detail crop'?0:tilt+(view==='Angled view'?-22:0);
     return <dialog ref={dialog} className="art-dialog product-dialog" aria-label={work ? `${current.title} artwork view`:'Artwork view'} onClose={onClose} onKeyDown={e=>{
         if(e.key!=='Tab')return;
@@ -90,19 +91,19 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
             <div className="product-showcase">
                 <div className={`product-stage${view==='Detail crop'?' is-detail':''}`}>
                     <span className="product-word" aria-hidden="true">{current.title.split(' ')[0]}</span>
-                    <button type="button" className="product-neighbor neighbor-before" onClick={()=>change(-1)} aria-label={`Previous artwork: ${before.title}`}><img src={before.img} alt="" /><span>← {before.title}</span></button>
+                    <button type="button" className="product-neighbor neighbor-before" onClick={()=>change(-1)} aria-label={`Previous view: ${before}`}><img className={before==='Detail crop'?'neighbor-crop':before==='Angled view'?'neighbor-angle':''} src={current.img} alt="" /><span>← {before}</span></button>
                     <div key={current.title} className="product-object" style={{'--angle':`${angle}deg`,'--zoom':view==='Detail crop'?'1.65':'1'} as React.CSSProperties}
                         onPointerDown={e=>{if(e.button!==0||view==='Detail crop')return;drag.current={x:e.clientX,angle:tilt};e.currentTarget.setPointerCapture(e.pointerId);}}
                         onPointerMove={e=>{if(drag.current)setTilt(Math.max(-28,Math.min(28,drag.current.angle+(e.clientX-drag.current.x)*.18)));}}
                         onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}>
                         <div className={`product-frame finish-${finish}`}><img src={current.img} alt={`${current.title}, illustrative artwork`} draggable={false}/></div>
                     </div>
-                    <button type="button" className="product-neighbor neighbor-after" onClick={()=>change(1)} aria-label={`Next artwork: ${after.title}`}><img src={after.img} alt=""/><span>{after.title} →</span></button>
+                    <button type="button" className="product-neighbor neighbor-after" onClick={()=>change(1)} aria-label={`Next view: ${after}`}><img className={after==='Detail crop'?'neighbor-crop':after==='Angled view'?'neighbor-angle':''} src={current.img} alt=""/><span>{after} →</span></button>
                     <span className="product-ground" aria-hidden="true"/>
-                    <div className="product-stage-caption"><span>{String(index+1).padStart(2,'0')} / {String(works.length).padStart(2,'0')}</span><span>{view==='Detail crop'?'A closer look at the image':'Drag artwork to change perspective'}</span></div>
+                    <div className="product-stage-caption"><span>View {String(viewIndex+1).padStart(2,'0')} / 03</span><span>{view==='Detail crop'?'A closer look at the same image':'Drag artwork to change perspective'}</span></div>
                 </div>
                 <div className="product-summary" aria-live="polite"><div><p className="kicker">{current.kind.split(' · ')[0]} / {current.artist}</p><h2 className="display">{current.title}</h2></div><div className="product-buyless"><strong>{current.price}</strong><span>Illustrative price</span></div></div>
-                <div className="product-toolbar"><div className="product-buttons" aria-label="Artwork view">{['Full artwork','Angled view','Detail crop'].map(v=><button type="button" key={v} aria-pressed={view===v} onClick={()=>{setView(v);setTilt(0);}}>{v}</button>)}</div><div className="product-finishes" aria-label="Display frame">{finishes.map((v,i)=><button type="button" key={v.name} aria-label={`${v.name} display`} aria-pressed={finish===i} onClick={()=>setFinish(i)}><span style={{background:i===0?'#777':v.edge}}/>{v.name}</button>)}</div></div>
+                <div className="product-toolbar"><div className="product-buttons" aria-label="Artwork view">{views.map(v=><button type="button" key={v} aria-pressed={view===v} onClick={()=>{setView(v);setTilt(0);}}>{v}</button>)}</div><div className="product-finishes" aria-label="Display frame">{finishes.map((v,i)=><button type="button" key={v.name} aria-label={`${v.name} display`} aria-pressed={finish===i} onClick={()=>setFinish(i)}><span style={{background:i===0?'#777':v.edge}}/>{v.name}</button>)}</div></div>
                 <button type="button" className="product-details-link" onClick={()=>dialog.current?.querySelector('.product-story')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})}>Look a little closer <span>↓</span></button>
             </div>
             <section className="product-story" aria-label="Artwork details">
