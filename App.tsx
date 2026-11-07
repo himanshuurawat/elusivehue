@@ -62,6 +62,35 @@ function DepthScene({ pageFlow = false }: { pageFlow?: boolean }) {
     </div>;
 }
 
+function OfferDemo({work}: {work: typeof works[number]}) {
+    const [open,setOpen]=useState(false);
+    const [amount,setAmount]=useState('');
+    const [counter,setCounter]=useState('');
+    const [note,setNote]=useState('');
+    const [status,setStatus]=useState('draft');
+    const [error,setError]=useState('');
+    const [history,setHistory]=useState<{who:string;text:string}[]>([]);
+    const money=(value:string)=>'₹'+Number(value).toLocaleString('en-IN');
+    const valid=(value:string)=>/^\d+$/.test(value)&&Number(value)>0&&Number(value)<=10000000;
+    const add=(who:string,text:string)=>setHistory(h=>[...h,{who,text}]);
+    const request=()=>{if(!valid(amount)){setError('Enter a whole-rupee amount between ₹1 and ₹1,00,00,000.');return;}setError('');add('Buyer',`Offered ${money(amount)}${note.trim()?` · ${note.trim()}`:''}`);setStatus('pending');setNote('');};
+    const reset=()=>{setStatus('draft');setHistory([]);setAmount('');setCounter('');setNote('');setError('');};
+    return <section className="offer-demo" aria-label="Bargaining demo">
+        <div className="offer-intro"><div><span className="kicker">A conversation about price</span><h3 className="display">Make an offer.</h3><p>Have a price in mind? Start a request with the artist.</p></div><button type="button" className="offer-start" aria-expanded={open} onClick={()=>setOpen(!open)}>{open?'Hide offer demo':'Try offer demo ↗'}</button></div>
+        {open&&<div className="offer-flow"><p className="offer-demo-label">Interactive demo only · Nothing is sent or saved.</p>
+            <div className="offer-price-line"><span>Public listing price</span><strong>{work.price}</strong></div>
+            {history.length>0&&<ol className="offer-history" aria-live="polite">{history.map((item,i)=><li key={i}><span>{item.who}</span><p>{item.text}</p></li>)}</ol>}
+            {(status==='draft'||status==='counter')&&<form onSubmit={e=>{e.preventDefault();request();}} className="offer-buyer-form"><label>Your offer · INR<input inputMode="numeric" type="text" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="Enter your price" maxLength={8}/></label><label>Note to artist · optional<textarea value={note} onChange={e=>setNote(e.target.value)} maxLength={200} placeholder="Add a short note" rows={2}/></label><button type="button" onClick={request}>{status==='counter'?'Send another offer · demo':'Send offer request · demo'}</button></form>}
+            {status==='pending'&&<div className="offer-artist-panel"><p className="kicker">Artist preview · simulated response</p><p>Request for {work.title}. Choose how the artist responds in this demo.</p><div className="offer-actions"><button type="button" onClick={()=>{add('Artist · simulated',`Accepted ${money(amount)}`);setStatus('accepted');}}>Accept offer</button><button type="button" onClick={()=>{add('Artist · simulated','Declined this request');setStatus('declined');}}>Decline</button></div><form onSubmit={e=>{e.preventDefault();if(!valid(counter)){setError('Enter a valid whole-rupee counter-offer.');return;}setError('');add('Artist · simulated',`Counter-offered ${money(counter)}`);setStatus('counter');}}><label>Artist counter-offer · INR<input inputMode="numeric" type="text" value={counter} onChange={e=>setCounter(e.target.value)} placeholder="Another price" maxLength={8}/></label><button type="button" onClick={()=>{if(!valid(counter)){setError('Enter a valid whole-rupee counter-offer.');return;}setError('');add('Artist · simulated',`Counter-offered ${money(counter)}`);setStatus('counter');}}>Send counter-offer · demo</button></form></div>}
+            {status==='counter'&&<div className="offer-counter"><p>Artist counter-offer: <strong>{money(counter)}</strong></p><button type="button" onClick={()=>{setAmount(counter);add('Buyer',`Accepted counter-offer ${money(counter)}`);setStatus('accepted');}}>Accept counter-offer · demo</button><p>Or continue negotiating with another offer above.</p></div>}
+            {status==='accepted'&&<div className="offer-result" role="status"><span className="kicker">Agreement preview</span><h4 className="display">Agreed: {money(amount)}</h4><p>For this buyer and request only. Public listing price stays {work.price}. This demo creates no purchase, reservation or payment.</p></div>}
+            {status==='declined'&&<p className="offer-result" role="status">Request declined in this demo. The listing remains unchanged.</p>}
+            {error&&<p className="offer-error" role="alert">{error}</p>}
+            {status!=='draft'&&<button type="button" className="offer-reset" onClick={reset}>Start a fresh demo</button>}
+        </div>}
+    </section>;
+}
+
 function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onClose: () => void}) {
     const dialog = React.useRef<HTMLDialogElement>(null);
     const views = ['Full artwork','Angled view','Detail crop'];
@@ -99,7 +128,7 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
     const angle=view==='Detail crop'?0:tilt+(view==='Angled view'?-22:0);
     return <dialog ref={dialog} className="art-dialog product-dialog" aria-label={work ? `${current.title} artwork view`:'Artwork view'} onClose={onClose} onKeyDown={e=>{
         if(e.key!=='Tab')return;
-        const buttons=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('button:not([disabled])'));
+        const buttons=Array.from(e.currentTarget.querySelectorAll<HTMLElement>('button:not([disabled]),input:not([disabled]),textarea:not([disabled])'));
         const first=buttons[0],last=buttons[buttons.length-1];
         if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}
         if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}
@@ -126,6 +155,7 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
                 <div className="product-mini-notes" key={`notes-${view}`}><span>0{viewIndex+1} / {view==='Detail crop'?'Inside the image':view==='Angled view'?'A different perspective':'The whole picture'}</span><button type="button" className="product-motion-toggle" aria-pressed={!moving} onClick={()=>setMoving(!moving)}>{moving?'Pause motion':'Resume motion'}</button></div>
                 <div className="product-summary" aria-live="polite"><div><p className="kicker">{current.kind.split(' · ')[0]} / {current.artist}</p><h2 className="display">{current.title}</h2></div><div className="product-buyless"><strong>{current.price}</strong><span>Illustrative price</span></div></div>
                 <section className="product-basic-specs" aria-label="Basic artwork details"><div className="spec-heading"><span>Piece details</span><span>Sample specifications</span></div><dl><div><dt>Size class</dt><dd>{specs.size}</dd></div><div><dt>{specs.dimensionLabel}</dt><dd>{specs.dimensions}</dd></div><div><dt>Art medium</dt><dd>{specs.medium}</dd></div>{current.kind.includes('Edition')&&<div><dt>Edition</dt><dd>{current.kind.split(' · ').pop()}</dd></div>}</dl><p>Demo sizes only. Actual dimensions and medium come from the artist.</p></section>
+                <OfferDemo key={current.title} work={current}/>
                 <div className="product-toolbar"><div className="product-buttons" aria-label="Artwork view">{views.map(v=><button type="button" key={v} aria-pressed={view===v} onClick={()=>{setDirection(views.indexOf(v)>=viewIndex?1:-1);setView(v);setTilt(0);}}>{v}</button>)}</div><div className="product-finishes" aria-label="Display frame">{finishes.map((v,i)=><button type="button" key={v.name} aria-label={`${v.name} display`} aria-pressed={finish===i} onClick={()=>{setDirection(1);setFinish(i);}}><span style={{background:i===0?'#777':v.edge}}/>{v.name}</button>)}</div></div>
                 <button type="button" className="product-details-link" onClick={()=>dialog.current?.querySelector('.product-story')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})}>Look a little closer <span>↓</span></button>
             </div>
