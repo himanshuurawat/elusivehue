@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {Routes, Route} from 'react-router-dom';
+const MyArtworks=React.lazy(()=>import('./ArtworkStudio').then(m=>({default:m.MyArtworks})));
 const AccountPage=React.lazy(()=>import('./AccountPage').then(m=>({default:m.AccountPage}))); 
 import {heroWide,artEmber,artGlitch,artFigure,artVessel,artContour,artCollage,resaleCamera,resaleBrushes,resaleJacket} from './artwork';
 const DOT = '\u00B7';
@@ -45,6 +46,46 @@ function ResaleShelf() {
 
 function Wordmark() {
     return <span className="wordmark">elusive<i>{DOT}</i>hue</span>;
+}
+
+function AnimatedWordmark() {
+    const ref = React.useRef<HTMLSpanElement>(null);
+    React.useEffect(() => {
+        const span = ref.current;
+        if(!span) return;
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+        let playing = true;
+        if(!reduced.matches) span.classList.add('wm-intro'); else playing = false;
+        const play = () => {
+            if(playing || reduced.matches) return;
+            playing = true;
+            span.classList.add('wm-play');
+        };
+        const dot = span.querySelector('.wm-dot');
+        const onEnd = () => { playing = false; span.classList.remove('wm-intro'); span.classList.remove('wm-play'); };
+        dot?.addEventListener('animationend', onEnd);
+        window.addEventListener('scroll', play, {passive:true, capture:true});
+        window.addEventListener('pointerdown', play, {passive:true});
+        window.addEventListener('touchstart', play, {passive:true});
+        window.addEventListener('keydown', play);
+        return () => {
+            window.removeEventListener('scroll', play, {capture:true} as EventListenerOptions);
+            window.removeEventListener('pointerdown', play);
+            window.removeEventListener('touchstart', play);
+            window.removeEventListener('keydown', play);
+            dot?.removeEventListener('animationend', onEnd);
+        };
+    }, []);
+    return <span ref={ref} className="wordmark-anim" role="img" aria-label="Elusive Hue">
+        <svg viewBox="146 256 336 114" aria-hidden="true">
+            <text x="333" y="330" textAnchor="end" fontSize="74">elus&#x131;ve</text>
+            <g className="wm-hue">
+                <text x="342" y="330" fontSize="74">hue</text>
+            </g>
+            <line className="wm-ul" x1="342" y1="346" x2="451" y2="346" />
+            <circle className="wm-dot" r="5.5" />
+        </svg>
+    </span>;
 }
 
 function DepthScene({ pageFlow = false }: { pageFlow?: boolean }) {
@@ -274,7 +315,7 @@ function useGalleryMotion(root: React.RefObject<HTMLDivElement | null>, changing
     }, [changing, root]);
 }
 
-function Gallery({ still = false }: { still?: boolean }) {
+function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn?:boolean }) {
     const [alt, setAlt] = useState(false);
     const [filter, setFilter] = useState('All works');
     const [listingOpen,setListingOpen]=useState(false);
@@ -286,10 +327,10 @@ function Gallery({ still = false }: { still?: boolean }) {
     return <div ref={galleryRoot} className={`stage gallery chosen-gallery${still ? ' still' : ''}${alt ? ' alt' : ''}`}>
         <div className="grain" />
         <nav className="pillnav chosen-nav" aria-label="Gallery navigation">
-            <button className="brand-button" type="button" onClick={() => jump('gallery-top')} aria-label="Elusive Hue home"><Wordmark /></button>
+            <button className="brand-button" type="button" onClick={() => jump('gallery-top')} aria-label="Elusive Hue home"><AnimatedWordmark /></button>
             <button type="button" onClick={() => jump('collection')}>Collection</button>
             <button type="button" onClick={() => jump('secondhand')}>Resale</button>
-            <a href="#/account" className="account-nav-link">Account</a><button type="button" className="themebtn" onClick={() => setAlt(!alt)} aria-pressed={alt}>{alt ? 'Dark' : 'Light'}</button>
+            <a href={signedIn?"#/account":"#/account?mode=signup"} className="account-nav-link">{signedIn?'Account':'Sign up'}</a><button type="button" className="themebtn" onClick={() => setAlt(!alt)} aria-pressed={alt}>{alt ? 'Dark' : 'Light'}</button>
         </nav>
         <header className="g-hero" id="gallery-top">
             <span className="vert rise d3">Midnight Gallery {DOT} A different perspective</span>
@@ -316,7 +357,7 @@ function Gallery({ still = false }: { still?: boolean }) {
                 </button>)}
             </div>
         </section>
-        <section className="g-section listing-invite"><div><p className="kicker">For the artist</p><h2 className="display">Your work belongs here.</h2><p>Try building a listing, then see it from the buyer's side.</p></div><button type="button" className="gallery-cta" onClick={()=>setListingOpen(true)}>List an artwork · demo ↗</button></section>
+        <section className="g-section listing-invite"><div><p className="kicker">For the artist</p><h2 className="display">Your work belongs here.</h2><p>{signedIn?'Save your photo and details as a private draft in your account.':'Explore a local listing preview. Sign in to save your own work.'}</p></div>{signedIn?<a className="gallery-cta" href="#/my-artworks">My artworks ↗</a>:<button type="button" className="gallery-cta" onClick={()=>setListingOpen(true)}>Try the listing preview ↗</button>}</section>
         <section className="g-section">
             <div className="g-feature"><div className="feature-image"><img src={artFigure} alt="Movement III, illustrative charcoal figure study" loading="lazy" /></div><div className="scroll-reveal">
                 <p className="kicker">02 / A closer look</p><h3 className="display">A study<br />in movement.</h3>
@@ -325,11 +366,33 @@ function Gallery({ still = false }: { still?: boolean }) {
             </div></div>
         </section>
         <div id="secondhand"><ResaleShelf /></div>
-        <section className="g-section project-note"><p className="kicker">The idea behind Elusive Hue</p><h2 className="display">Room for art.<br />Room for stories.</h2><p>A planned home for physical artwork and digital editions, with a separate shelf for personal belongings. The two collections stay distinct.</p><details><summary>What works in this preview?</summary><p>Browse the artwork, filter physical and digital pieces, open full-image and detail-crop views, switch the theme and explore the layered scroll scene. Artwork content is illustrative. Email and Google accounts and editable profiles are available. There are no orders, payments or seller services.</p></details></section>
+        <section className="g-section project-note"><p className="kicker">The idea behind Elusive Hue</p><h2 className="display">Room for art.<br />Room for stories.</h2><p>A planned home for physical artwork and digital editions, with a separate shelf for personal belongings. The two collections stay distinct.</p><details><summary>What works in this preview?</summary><p>Browse the artwork, filter physical and digital pieces, open full-image and detail-crop views, switch the theme and explore the layered scroll scene. Artwork content is illustrative. Email and Google accounts and editable profiles are available. Signed-in artists can save private artwork drafts in My artworks. Public listings, orders and payments are not available.</p></details></section>
         <footer className="g-foot"><Wordmark /><a className="developer-credit" href="https://github.com/himanshuurawat" target="_blank" rel="noopener noreferrer">Developed by Himanshu Rawat <span aria-hidden="true">↗</span></a><nav aria-label="Legal"><a href="/privacy.html">Privacy policy</a><a href="/terms.html">Terms of use</a></nav><p className="meta">Midnight Gallery / selected direction. Frontend preview only. All artworks, artists, mediums, prices and resale items are dummy content. Nothing is for sale here.</p><button className="text-link" type="button" onClick={() => jump('gallery-top')}>Back to the top ↑</button></footer>
         {listingOpen&&<ArtistListing onClose={()=>setListingOpen(false)}/>}
         <ArtworkPreview work={selected} onClose={() => setSelected(null)} />
     </div>;
 }
 
-export function App(){return <Routes><Route path="/" element={<Gallery/>}/><Route path="/gallery" element={<Gallery/>}/><Route path="/account" element={<React.Suspense fallback={<div style={{background:'#0b0b0c',color:'#efeee8',minHeight:'100vh',padding:32}} role="status">Opening your space...</div>}><AccountPage/></React.Suspense>}/></Routes>;}
+const guestKey='elusive-hue-guest-session';
+function guestChosen(){try{return sessionStorage.getItem(guestKey)==='true';}catch{return false;}}
+export function App(){
+ const [signedIn,setSignedIn]=useState(false);
+ const [checking,setChecking]=useState(true);
+ const [guest,setGuest]=useState(guestChosen);
+ React.useEffect(()=>{
+  let active=true;let unsubscribe:(()=>void)|undefined;
+  import('./account-service').then(({configuredAccountClient})=>{
+   if(!active)return;const client=configuredAccountClient();
+   if(!client){setChecking(false);return;}
+   client.auth.getSession().then(({data})=>{if(active){setSignedIn(Boolean(data.session));setChecking(false);}}).catch(()=>{if(active)setChecking(false);});
+   const {data}=client.auth.onAuthStateChange((_event,session)=>{if(active){setSignedIn(Boolean(session));setChecking(false);}});
+   unsubscribe=()=>data.subscription.unsubscribe();
+  }).catch(()=>{if(active)setChecking(false);});
+  return()=>{active=false;unsubscribe?.();};
+ },[]);
+ const continueAsGuest=()=>{try{sessionStorage.setItem(guestKey,'true');}catch{}setGuest(true);};
+ const loading=<div style={{background:'#0b0b0c',color:'#efeee8',minHeight:'100vh',padding:32}} role="status">Opening your space...</div>;
+ const account=<React.Suspense fallback={loading}><AccountPage onGuest={continueAsGuest}/></React.Suspense>;
+ const entry=checking?loading:(signedIn||guest?<Gallery signedIn={signedIn}/>:account);
+ return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/></Routes>;
+}
