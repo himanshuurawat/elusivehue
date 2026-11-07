@@ -644,3 +644,33 @@ body { background: #0a0909; }
 .product-stage {overflow:clip;}
 .product-stage.is-detail .product-neighbor img {opacity:0;}
 .product-stage.is-detail .product-neighbor {background:#191b1b88;border-radius:12px;}
+/* Same-product choreography: isolated from the accepted gallery journey. */
+.product-showcase {position:relative;isolation:isolate;background:var(--scene-tone);overflow:clip;transition:background-color .7s ease;}
+.product-scene-sweep {position:absolute;inset:0;background:var(--product-tone);z-index:-1;pointer-events:none;animation:scene-wipe 1s cubic-bezier(.2,.7,.2,1) both;}
+.product-chapter-nav {display:flex;justify-content:space-between;gap:10px;padding:18px 20px 4px;font:8px var(--text);letter-spacing:.06em;color:#a4a49d;}
+.product-chapter-nav span {padding-bottom:9px;border-bottom:1px solid #ffffff18;flex:1;transition:color .5s,border-color .5s;}
+.product-chapter-nav .active {color:#f3eee5;border-color:#d3c3a3;}
+.product-object {animation:product-chapter-enter 1.1s cubic-bezier(.16,.75,.2,1) both;}
+.product-word {animation:word-chapter-enter 1.1s cubic-bezier(.16,.75,.2,1) both;}
+.product-view-notes {margin:4px 20px 12px;display:flex;gap:15px;position:relative;max-width:620px;padding:18px 0 22px;animation:note-enter .75s .18s both;border-bottom:1px solid #ffffff20;}
+.product-note-number {font:32px/1 var(--display);color:#a49e90;}
+.product-view-notes .kicker {font:8px var(--text);letter-spacing:.12em;color:#b9b5ad;margin:0 0 10px;}
+.product-view-notes h3 {font:28px/1.05 var(--display);letter-spacing:-.035em;margin:0 0 12px;}
+.product-view-notes p:last-child {font:11px/1.8 var(--text);color:#bdb9b1;max-width:48ch;margin:0;}
+.product-note-rule {position:absolute;bottom:-1px;left:0;height:1px;background:#c9bfa7;width:100%;transform-origin:left;animation:rule-enter 1s .2s both;}
+.product-feature,.product-story-intro {opacity:.25;transform:translateY(45px);transition:opacity .85s ease,transform 1.1s cubic-bezier(.16,.75,.2,1);}
+.product-feature.chapter-visible,.product-story-intro.chapter-visible {opacity:1;transform:none;}
+.product-feature-image img {transform:scale(.9) rotate(-4deg);transition:transform 1.3s cubic-bezier(.16,.75,.2,1);}
+.product-feature.chapter-visible .product-feature-image img {transform:scale(1) rotate(0);}
+.product-feature-image.texture-crop img {transform:scale(2.05) translateY(10%);}
+.product-feature.chapter-visible .texture-crop img {transform:scale(1.8) translateY(0);}
+.product-feature-copy {transition:transform 1s .12s,opacity 1s .12s;transform:translateY(30px);opacity:0;}
+.chapter-visible .product-feature-copy {transform:none;opacity:1;}
+.product-stage.is-detail .product-stage-caption {background:var(--scene-tone);}
+@keyframes product-chapter-enter {0%{opacity:0;translate:var(--entry) 30px;rotate:7deg;scale:.82}45%{opacity:1}100%{opacity:1;translate:0 0;rotate:0deg;scale:1}}
+@keyframes scene-wipe {from{transform:scaleX(1);transform-origin:right}to{transform:scaleX(0);transform-origin:right}}
+@keyframes word-chapter-enter {from{opacity:0;translate:-40px 0}to{opacity:1;translate:0 0}}
+@keyframes note-enter {from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes rule-enter {from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media(min-width:768px) {.product-chapter-nav{padding:20px 35px 4px;max-width:600px;font-size:9px}.product-view-notes{margin:5px 35px 22px;gap:25px;max-width:none;align-items:flex-start}.product-view-notes h3{font-size:34px}.product-view-notes>div{display:grid;grid-template-columns:1fr 1fr;column-gap:50px;width:100%}.product-view-notes .kicker{grid-column:1/-1}.product-view-notes p:last-child{font-size:12px}.product-note-number{font-size:42px}}
+@media(prefers-reduced-motion:reduce) {.product-showcase{transition:none}.product-object,.product-word,.product-scene-sweep,.product-view-notes,.product-note-rule{animation:none}.product-scene-sweep{display:none}.product-feature,.product-story-intro,.product-feature-copy{opacity:1;transform:none;transition:none}.product-feature-image img,.product-feature.chapter-visible .product-feature-image img{transform:none;transition:none}.product-feature-image.texture-crop img,.product-feature.chapter-visible .texture-crop img{transform:scale(1.8)}}
