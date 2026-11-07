@@ -45,7 +45,9 @@ The public source uses system fonts and original placeholder images. The compres
 
 ## Current frontend interactions
 
-Collection navigation, physical/digital filtering, artwork detail previews, full-image/detail-crop controls, light/dark theme and a separate resale shelf. These controls only change local presentation. There are no real listings, accounts, orders or payments. The specific product-showcase motion reference is awaiting clarification and is not claimed implemented.
+Collection navigation, physical/digital filtering, same-artwork full/angle/detail views, light/dark theme and a separate resale shelf. Artwork details include clearly marked sample dimensions and art media. A local bargaining demo supports offer requests, simulated artist replies and buyer-specific agreements without changing the public sample price.
+
+The artist studio demo lets you choose a local photo or sample artwork, enter title, medium, size, dimensions and asking price, then inspect and edit a buyer-facing listing preview. Photos are not uploaded. Drafts are held in memory and cleared when the studio closes. There is no publish action. These controls change local presentation only, with no real listings, accounts, orders or payments.
 
 ## Motion continuation
 
