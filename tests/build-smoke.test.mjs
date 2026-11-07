@@ -16,7 +16,7 @@ async function builtFile(url) {
 }
 
 test('built entry has a root mount and a module script', () => {
-  assert.match(html, /<div\s+id=["']training-missing-root["']/);
+  assert.match(html, /<div\s+id=["']root["']/);
   assert.match(html, /<script\b[^>]*type=["']module["'][^>]*src=/);
   assert.doesNotMatch(html, /src=["']\/?main\.tsx["']/);
 });
