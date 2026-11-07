@@ -31,38 +31,6 @@ export function AccountPage({onGuest}:{onGuest:()=>void}){
  useEffect(()=>{if(!surfaceWave)return;const el=surface.current;if(!el)return;const rect=el.getBoundingClientRect(),origin=waveOrigin.current;const canvas=document.createElement('canvas');const n=256;canvas.width=n;canvas.height=n;const ctx=canvas.getContext('2d');if(!ctx)return;const image=ctx.createImageData(n,n);const maxRadius=Math.max(Math.hypot(origin.x,origin.y),Math.hypot(rect.width-origin.x,origin.y),Math.hypot(origin.x,rect.height-origin.y),Math.hypot(rect.width-origin.x,rect.height-origin.y));let frame=0;const start=performance.now();const draw=(now:number)=>{const t=Math.min(1,(now-start)/2600),radius=t*maxRadius*1.15,band=100;for(let y=0;y<n;y++)for(let x=0;x<n;x++){const dx=x/n*rect.width-origin.x,dy=y/n*rect.height-origin.y,d=Math.hypot(dx,dy),z=d-radius;const envelope=Math.exp(-z*z/(band*band))*Math.sin(Math.PI*t);const shift=Math.sin(z/20)*envelope;const i=(y*n+x)*4;image.data[i]=128+Math.round(90*shift*dx/(d||1));image.data[i+1]=128+Math.round(90*shift*dy/(d||1));image.data[i+2]=Math.round(255*envelope);image.data[i+3]=255;}ctx.putImageData(image,0,0);waveMap.current?.setAttribute('href',canvas.toDataURL());if(t<1)frame=requestAnimationFrame(draw);else setSurfaceWave(false);};frame=requestAnimationFrame(draw);return()=>cancelAnimationFrame(frame);},[surfaceWave]);
  const positionRipple=(input:HTMLInputElement)=>{const host=input.closest('label');if(!host)return;const style=getComputedStyle(input);const canvas=document.createElement('canvas');const context=canvas.getContext('2d');if(!context)return;context.font=style.font;const caret=input.selectionStart??input.value.length;const text=input.type==='password'?'•'.repeat(caret):input.value.slice(0,caret);const h=host.getBoundingClientRect(),r=input.getBoundingClientRect();const x=r.left-h.left+parseFloat(style.paddingLeft)+context.measureText(text).width-input.scrollLeft;host.style.setProperty('--ripple-x',Math.min(r.right-h.left-8,Math.max(r.left-h.left+8,x))+'px');host.style.setProperty('--ripple-y',(r.top-h.top+r.height/2)+'px');host.dataset.ripple=String((pulse%2)+1);setPulse(pulse+1);};
  const tapRipple=(e:React.PointerEvent<HTMLElement>)=>{if(paused||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;if(!firstTap.current){firstTap.current=true;const id=++rippleId.current,x=e.clientX,y=e.clientY;setPageRipples([{id,x,y,size:Math.max(Math.hypot(x,y),Math.hypot(innerWidth-x,y),Math.hypot(x,innerHeight-y),Math.hypot(innerWidth-x,innerHeight-y))*2.1}]);const bounds=surface.current?.getBoundingClientRect();waveOrigin.current={x:x-(bounds?.left||0),y:y-(bounds?.top||0)};setSurfaceWave(true);}const input=(e.target as HTMLElement).closest('input');if(input)requestAnimationFrame(()=>positionRipple(input));};
-import {Link,useLocation} from 'react-router-dom';
-import {artFigure,artCollage,artContour} from './artwork';
-import './account.css';
-import {configuredAccountClient,authReturnUrl} from './account-service';
-import {ProfilePanel} from './ProfilePanel';
-import type {Session} from '@supabase/supabase-js';
-const client=configuredAccountClient();
-// Separate opt-in. Email auth must stay usable while Google is being staged.
-const googleEnabled=Boolean(client)&&import.meta.env.VITE_ENABLE_GOOGLE_AUTH==='true';
-
-type Mode='login'|'signup'|'reset'|'update';
-export function AccountPage({onGuest}:{onGuest:()=>void}){
- const location=useLocation();
- const requestedMode=new URLSearchParams(location.search).get('mode')==='signup'?'signup':'login';
- const [mode,setMode]=useState<Mode>(requestedMode);
- useEffect(()=>{if(!recovering)setMode(requestedMode);},[requestedMode]);
- const [show,setShow]=useState(false);
- const [recovering,setRecovering]=useState(false);
- const [message,setMessage]=useState('');
- const [paused,setPaused]=useState(false);
- const [busy,setBusy]=useState(false);
- const [pulse,setPulse]=useState(0);
- const [pageRipples,setPageRipples]=useState<{id:number;x:number;y:number;size:number}[]>([]);
- const rippleId=useRef(0);
- const firstTap=useRef(false);
- const [surfaceWave,setSurfaceWave]=useState(false);
- const surface=useRef<HTMLDivElement>(null);
- const waveOrigin=useRef({x:0,y:0});
- const waveMap=useRef<SVGFEImageElement>(null);
- useEffect(()=>{if(!surfaceWave)return;const el=surface.current;if(!el)return;const rect=el.getBoundingClientRect(),origin=waveOrigin.current;const canvas=document.createElement('canvas');const n=256;canvas.width=n;canvas.height=n;const ctx=canvas.getContext('2d');if(!ctx)return;const image=ctx.createImageData(n,n);const maxRadius=Math.max(Math.hypot(origin.x,origin.y),Math.hypot(rect.width-origin.x,origin.y),Math.hypot(origin.x,rect.height-origin.y),Math.hypot(rect.width-origin.x,rect.height-origin.y));let frame=0;const start=performance.now();const draw=(now:number)=>{const t=Math.min(1,(now-start)/2600),radius=t*maxRadius*1.15,band=100;for(let y=0;y<n;y++)for(let x=0;x<n;x++){const dx=x/n*rect.width-origin.x,dy=y/n*rect.height-origin.y,d=Math.hypot(dx,dy),z=d-radius;const envelope=Math.exp(-z*z/(band*band))*Math.sin(Math.PI*t);const shift=Math.sin(z/20)*envelope;const i=(y*n+x)*4;image.data[i]=128+Math.round(90*shift*dx/(d||1));image.data[i+1]=128+Math.round(90*shift*dy/(d||1));image.data[i+2]=Math.round(255*envelope);image.data[i+3]=255;}ctx.putImageData(image,0,0);waveMap.current?.setAttribute('href',canvas.toDataURL());if(t<1)frame=requestAnimationFrame(draw);else setSurfaceWave(false);};frame=requestAnimationFrame(draw);return()=>cancelAnimationFrame(frame);},[surfaceWave]);
- const positionRipple=(input:HTMLInputElement)=>{const host=input.closest('label');if(!host)return;const style=getComputedStyle(input);const canvas=document.createElement('canvas');const context=canvas.getContext('2d');if(!context)return;context.font=style.font;const caret=input.selectionStart??input.value.length;const text=input.type==='password'?'•'.repeat(caret):input.value.slice(0,caret);const h=host.getBoundingClientRect(),r=input.getBoundingClientRect();const x=r.left-h.left+parseFloat(style.paddingLeft)+context.measureText(text).width-input.scrollLeft;host.style.setProperty('--ripple-x',Math.min(r.right-h.left-8,Math.max(r.left-h.left+8,x))+'px');host.style.setProperty('--ripple-y',(r.top-h.top+r.height/2)+'px');host.dataset.ripple=String((pulse%2)+1);setPulse(pulse+1);};
- const tapRipple=(e:React.PointerEvent<HTMLElement>)=>{if(paused||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;if(!firstTap.current){firstTap.current=true;const id=++rippleId.current,x=e.clientX,y=e.clientY;setPageRipples([{id,x,y,size:Math.max(Math.hypot(x,y),Math.hypot(innerWidth-x,y),Math.hypot(x,innerHeight-y),Math.hypot(innerWidth-x,innerHeight-y))*2.1}]);const bounds=surface.current?.getBoundingClientRect();waveOrigin.current={x:x-(bounds?.left||0),y:y-(bounds?.top||0)};setSurfaceWave(true);}const input=(e.target as HTMLElement).closest('input');if(input)requestAnimationFrame(()=>positionRipple(input));};
  const pulseField=(e:React.FormEvent<HTMLElement>)=>{const input=e.target as HTMLInputElement;if(input.tagName==='INPUT')positionRipple(input);};
 
  const [session,setSession]=useState<Session|null>(null);
