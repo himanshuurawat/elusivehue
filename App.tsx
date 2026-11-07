@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {Routes, Route} from 'react-router-dom';
+const AccountPage=React.lazy(()=>import('./AccountPage').then(m=>({default:m.AccountPage}))); 
 import {heroWide,artEmber,artGlitch,artFigure,artVessel,artContour,artCollage,resaleCamera,resaleBrushes,resaleJacket} from './artwork';
 const DOT = '\u00B7';
 const RU = '\u20B9';
@@ -331,4 +332,4 @@ function Gallery({ still = false }: { still?: boolean }) {
     </div>;
 }
 
-export function App(){return <Routes><Route path="/" element={<Gallery/>}/><Route path="/gallery" element={<Gallery/>}/></Routes>;}
+export function App(){return <Routes><Route path="/" element={<Gallery/>}/><Route path="/gallery" element={<Gallery/>}/><Route path="/account" element={<React.Suspense fallback={<div style={{background:'#0b0b0c',color:'#efeee8',minHeight:'100vh',padding:32}} role="status">Opening your space...</div>}><AccountPage/></React.Suspense>}/></Routes>;}
