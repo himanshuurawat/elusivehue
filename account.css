@@ -24,3 +24,5 @@
 
 /* Official Google Android+Web dark pill asset, unchanged; source: developers.google.com/identity/branding-guidelines. */
 .account-google{display:flex;align-items:center;justify-content:center;min-height:50px;padding:5px 0;background:transparent;border:0;border-radius:0;cursor:pointer}.account-google img{display:block;width:180px;height:40px;max-width:100%;object-fit:contain}.account-google:disabled{opacity:.55;cursor:not-allowed}.account-google:not(:disabled):hover{filter:brightness(1.12)}
+
+.account-legal{display:flex;gap:24px;justify-content:center;padding:0 22px 28px}.account-legal a{display:inline-flex;align-items:center;min-height:44px;font-size:12px;color:#b8beaa}.g-foot nav{display:flex;gap:24px}.g-foot nav a{color:inherit;min-height:44px;display:inline-flex;align-items:center}
