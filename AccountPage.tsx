@@ -88,5 +88,6 @@ export function AccountPage(){
    </section>}
   </div>
  </div>
+ <nav className="account-legal" aria-label="Legal"><a href="/privacy.html">Privacy policy</a><a href="/terms.html">Terms of use</a></nav>
  </main>;
 }
