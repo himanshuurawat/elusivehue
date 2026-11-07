@@ -742,3 +742,5 @@ body { background: #0a0909; }
 
 /* Legal links are also available before the lazy account screen loads. */
 .g-foot nav{display:flex;flex-wrap:wrap;gap:24px}.g-foot nav a{color:inherit;min-height:44px;display:inline-flex;align-items:center}
+
+.developer-credit{color:var(--ink2);font-size:12px;line-height:1.5;text-decoration:none;display:inline-flex;align-items:center;gap:8px;align-self:flex-start;min-height:44px}.developer-credit:hover{color:var(--ink)}.developer-credit:focus-visible{outline:2px solid currentColor;outline-offset:5px;border-radius:2px}
