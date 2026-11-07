@@ -744,3 +744,143 @@ body { background: #0a0909; }
 .g-foot nav{display:flex;flex-wrap:wrap;gap:24px}.g-foot nav a{color:inherit;min-height:44px;display:inline-flex;align-items:center}
 
 .developer-credit{color:var(--ink2);font-size:12px;line-height:1.5;text-decoration:none;display:inline-flex;align-items:center;gap:8px;align-self:flex-start;min-height:44px}.developer-credit:hover{color:var(--ink)}.developer-credit:focus-visible{outline:2px solid currentColor;outline-offset:5px;border-radius:2px}
+
+/* Animated wordmark (header): full intro once on load, then idle still, one slow orbit per activity */
+.wordmark-anim { display:inline-flex; align-items:center; color:var(--ink); }
+.wordmark-anim svg { height:20px; width:auto; display:block; overflow:visible; }
+@media(min-width:768px) { .wordmark-anim svg{height:23px} }
+.wordmark-anim text { font-family:var(--display); font-style:italic; fill:currentColor; }
+.wordmark-anim .wm-ul { stroke:var(--red); stroke-width:2.5; stroke-dasharray:109; stroke-dashoffset:0; }
+.wordmark-anim .wm-dot { fill:var(--red); transform:translate(235.5px,283px); }
+.wordmark-anim.wm-intro .wm-dot { animation:wm-dot-intro 6s linear 1; }
+.wordmark-anim.wm-intro .wm-hue { animation:wm-hue-intro 6s ease-out 1; }
+.wordmark-anim.wm-intro .wm-ul { animation:wm-ul-intro 6s linear 1; }
+.wordmark-anim.wm-play .wm-dot { animation:wm-dot 3.8s linear 1; }
+@media(prefers-reduced-motion:reduce) { .wordmark-anim .wm-dot,.wordmark-anim .wm-hue,.wordmark-anim .wm-ul { animation:none !important } }
+@keyframes wm-dot-intro{
+0.0%{transform:translate(235.5px,283px)}
+1.33%{transform:translate(235.5px,283px)}
+2.67%{transform:translate(235.5px,283px)}
+4.0%{transform:translate(235.5px,283px)}
+5.33%{transform:translate(235.5px,283px)}
+6.67%{transform:translate(235.5px,283px)}
+8.0%{transform:translate(235.5px,283px)}
+9.33%{transform:translate(235.5px,283px)}
+10.67%{transform:translate(235.5px,283px)}
+12.0%{transform:translate(235.5px,283px)}
+13.33%{transform:translate(235.5px,283px)}
+14.67%{transform:translate(235.5px,283px)}
+16.0%{transform:translate(235.5px,283px)}
+17.33%{transform:translate(235.5px,283px)}
+18.67%{transform:translate(235.5px,283px)}
+20.0%{transform:translate(235.5px,283px)}
+21.33%{transform:translate(235.5px,283px)}
+22.67%{transform:translate(235.5px,283px)}
+24.0%{transform:translate(235.5px,283px)}
+25.33%{transform:translate(235.5px,283px)}
+26.67%{transform:translate(235.5px,283px)}
+28.0%{transform:translate(235.5px,283px)}
+28.33%{transform:translate(235.5px,283px)}
+29.67%{transform:translate(243.1px,277.5px)}
+31.0%{transform:translate(263.0px,264.0px)}
+32.33%{transform:translate(290.6px,249.5px)}
+33.67%{transform:translate(321.6px,242.9px)}
+35.0%{transform:translate(351.4px,247.1px)}
+36.33%{transform:translate(375.7px,256.3px)}
+37.67%{transform:translate(390.0px,263.0px)}
+38.33%{transform:translate(392.0px,264.0px)}
+40.83%{transform:translate(423.4px,267.1px)}
+43.33%{transform:translate(446.9px,276.1px)}
+45.83%{transform:translate(463.8px,289.7px)}
+48.33%{transform:translate(471.9px,306.2px)}
+50.83%{transform:translate(470.3px,323.5px)}
+53.33%{transform:translate(459.0px,339.3px)}
+55.83%{transform:translate(439.7px,351.5px)}
+58.33%{transform:translate(414.7px,358.6px)}
+60.83%{transform:translate(387.3px,359.7px)}
+63.33%{transform:translate(361.2px,354.5px)}
+65.83%{transform:translate(339.6px,343.8px)}
+68.33%{transform:translate(325.4px,329.0px)}
+70.83%{transform:translate(320.5px,312.0px)}
+73.33%{transform:translate(325.4px,295.0px)}
+75.83%{transform:translate(339.6px,280.2px)}
+78.33%{transform:translate(361.2px,269.5px)}
+80.83%{transform:translate(387.3px,264.3px)}
+81.67%{transform:translate(396.5px,264.0px)}
+83.0%{transform:translate(384.4px,260.4px)}
+84.33%{transform:translate(364.5px,251.6px)}
+85.67%{transform:translate(336.9px,243.9px)}
+87.0%{transform:translate(305.9px,244.8px)}
+88.33%{transform:translate(276.1px,256.3px)}
+89.67%{transform:translate(251.8px,271.4px)}
+91.0%{transform:translate(237.5px,281.6px)}
+91.67%{transform:translate(235.5px,283.0px)}
+93.0%{transform:translate(235.5px,283px)}
+94.33%{transform:translate(235.5px,283px)}
+95.67%{transform:translate(235.5px,283px)}
+97.0%{transform:translate(235.5px,283px)}
+98.33%{transform:translate(235.5px,283px)}
+99.67%{transform:translate(235.5px,283px)}
+100.0%{transform:translate(235.5px,283px)}
+}
+@keyframes wm-dot{
+0.0%{transform:translate(235.5px,283.0px)}
+2.11%{transform:translate(246.2px,275.3px)}
+4.21%{transform:translate(273.3px,257.8px)}
+6.32%{transform:translate(309.1px,244.2px)}
+8.42%{transform:translate(345.8px,245.6px)}
+10.53%{transform:translate(375.7px,256.3px)}
+12.63%{transform:translate(391.3px,263.6px)}
+13.16%{transform:translate(392.0px,264.0px)}
+17.11%{transform:translate(425.6px,267.7px)}
+21.05%{transform:translate(450.2px,278.1px)}
+25.0%{transform:translate(466.7px,293.6px)}
+28.95%{transform:translate(472.5px,312.0px)}
+32.89%{transform:translate(466.7px,330.4px)}
+36.84%{transform:translate(450.2px,345.9px)}
+40.79%{transform:translate(425.6px,356.3px)}
+44.74%{transform:translate(396.5px,360.0px)}
+48.68%{transform:translate(367.4px,356.3px)}
+52.63%{transform:translate(342.8px,345.9px)}
+56.58%{transform:translate(326.3px,330.4px)}
+60.53%{transform:translate(320.5px,312.0px)}
+64.47%{transform:translate(326.3px,293.6px)}
+68.42%{transform:translate(342.8px,278.1px)}
+72.37%{transform:translate(367.4px,267.7px)}
+76.32%{transform:translate(396.5px,264.0px)}
+78.42%{transform:translate(381.3px,258.9px)}
+80.53%{transform:translate(354.2px,247.9px)}
+82.63%{transform:translate(318.4px,243.1px)}
+84.74%{transform:translate(281.7px,253.4px)}
+86.84%{transform:translate(251.8px,271.4px)}
+88.95%{transform:translate(236.2px,282.5px)}
+89.47%{transform:translate(235.5px,283.0px)}
+91.58%{transform:translate(235.5px,283px)}
+93.68%{transform:translate(235.5px,283px)}
+95.79%{transform:translate(235.5px,283px)}
+97.89%{transform:translate(235.5px,283px)}
+100.0%{transform:translate(235.5px,283px)}
+}
+@keyframes wm-hue-intro{
+0.0%{opacity:0.0;transform:translateY(10.0px);filter:blur(1.4px)}
+2.5%{opacity:0.043;transform:translateY(9.6px);filter:blur(1.34px)}
+5.0%{opacity:0.156;transform:translateY(8.4px);filter:blur(1.18px)}
+7.5%{opacity:0.316;transform:translateY(6.8px);filter:blur(0.96px)}
+10.0%{opacity:0.5;transform:translateY(5.0px);filter:blur(0.7px)}
+12.5%{opacity:0.684;transform:translateY(3.2px);filter:blur(0.44px)}
+15.0%{opacity:0.844;transform:translateY(1.6px);filter:blur(0.22px)}
+17.5%{opacity:0.957;transform:translateY(0.4px);filter:blur(0.06px)}
+20.0%{opacity:1.0;transform:translateY(0.0px);filter:blur(0.0px)}
+100%{opacity:1;transform:translateY(0);filter:blur(0)}
+}
+@keyframes wm-ul-intro{
+0.0%{stroke-dashoffset:109}
+5.0%{stroke-dashoffset:109.0}
+7.5%{stroke-dashoffset:100.9}
+10.0%{stroke-dashoffset:80.7}
+12.5%{stroke-dashoffset:54.5}
+15.0%{stroke-dashoffset:28.3}
+17.5%{stroke-dashoffset:8.1}
+20.0%{stroke-dashoffset:0.0}
+100%{stroke-dashoffset:0}
+}
