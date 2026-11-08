@@ -327,7 +327,7 @@ function FollowButton({
         <span key={tick} className="pub-count-num">
           {followers.toLocaleString('en-IN')}
         </span>{' '}
-        followers {demo ? <em>demo</em> : null}
+        {followers === 1 ? 'follower' : 'followers'} {demo ? <em>demo</em> : null}
       </span>
     </div>
   );
