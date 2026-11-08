@@ -156,6 +156,27 @@ function rise(delay: string): React.CSSProperties {
 }
 
 /*
+ * LiquidGlassFilter: SVG displacement primitives for the liquid-glass
+ * surfaces below - the same feTurbulence + feDisplacementMap approach as
+ * the approved account page lens, tuned a little finer. This bends light
+ * inside the glass (real distortion), it is not blur-only glass.
+ */
+function LiquidGlassFilter() {
+  return (
+    <svg width="0" height="0" className="pub-filter" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="pub-liquid-glass" x="-15%" y="-15%" width="130%" height="130%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="2" seed="11" result="n" />
+          <feGaussianBlur in="n" stdDeviation="2" result="m" />
+          <feDisplacementMap in="SourceGraphic" in2="m" scale="16" xChannelSelector="R" yChannelSelector="G" />
+          <feGaussianBlur stdDeviation="1" />
+        </filter>
+      </defs>
+    </svg>
+  );
+}
+
+/*
  * DottedOrb: a small canvas particle orb, inspired by the user's
  * reference clip of dotted state orbs. Used ONLY for genuine waits
  * (an image that has not finished loading yet) - never as decoration
@@ -284,6 +305,7 @@ function FollowButton({followers, delay}: {followers: number; delay?: string}) {
 function PublicHeader() {
   return (
     <header className="pub-top">
+      <LiquidGlassFilter />
       <Link to="/gallery" className="pub-wordmark pub-rise">
         elusive<i>·</i>hue
       </Link>
@@ -354,6 +376,7 @@ export function ArtworkPage() {
             Buying is not live yet. This page previews how a shared artwork will look.
           </p>
           <Link to={`/artist/${artist.slug}`} className="pub-artist-card pub-rise" style={rise('0.5s')}>
+            <span className="pub-card-refract" aria-hidden="true" />
             <span className="pub-avatar" aria-hidden="true">
               {initials(artist.name)}
             </span>
