@@ -2,7 +2,10 @@ import React, {useState} from 'react';
 import {Routes, Route} from 'react-router-dom';
 const OrderHistory=React.lazy(()=>import('./OrderHistory').then(m=>({default:m.OrderHistory})));
 const MyArtworks=React.lazy(()=>import('./ArtworkStudio').then(m=>({default:m.MyArtworks})));
-const AccountPage=React.lazy(()=>import('./AccountPage').then(m=>({default:m.AccountPage}))); 
+const AccountPage=React.lazy(()=>import('./AccountPage').then(m=>({default:m.AccountPage})));
+const ArtworkPage=React.lazy(()=>import('./PublicPages').then(m=>({default:m.ArtworkPage})));
+const ArtistPage=React.lazy(()=>import('./PublicPages').then(m=>({default:m.ArtistPage})));
+import {slugFor} from './publicSlug';
 import {heroWide,artEmber,artGlitch,artFigure,artVessel,artContour,artCollage,resaleCamera,resaleBrushes,resaleJacket} from './artwork';
 const DOT = '\u00B7';
 const RU = '\u20B9';
@@ -223,7 +226,7 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
         if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}
     }}>
         {work && <div className="product-world" style={{'--product-tone':finishes[finish].tone,'--frame-tone':finishes[finish].edge,'--entry':`${direction*42}px`,'--scene-tone':view==='Detail crop'?'#26302d':view==='Angled view'?'#292b32':finishes[finish].tone} as React.CSSProperties}>
-            <div className="product-top"><span className="kicker">Elusive Hue / Viewing room</span><button type="button" className="product-close" aria-label="Close artwork preview" onClick={onClose}>Close ×</button></div>
+            <div className="product-top"><span className="kicker">Elusive Hue / Viewing room</span>{current&&<a className="product-public-link" href={`#/artwork/${slugFor(current.title)}`}>Open public page ↗</a>}<button type="button" className="product-close" aria-label="Close artwork preview" onClick={onClose}>Close ×</button></div>
             <div className={`product-showcase view-${viewIndex}`}>
                 <div className="product-scene-sweep" key={`sweep-${view}-${finish}`} aria-hidden="true"/>
                 <div className="product-chapter-nav" aria-hidden="true"><span className={viewIndex===0?'active':''}>01 / Composition</span><span className={viewIndex===1?'active':''}>02 / Perspective</span><span className={viewIndex===2?'active':''}>03 / Detail</span></div>
@@ -395,5 +398,5 @@ export function App(){
  const loading=<div style={{background:'#0b0b0c',color:'#efeee8',minHeight:'100vh',padding:32}} role="status">Opening your space...</div>;
  const account=<React.Suspense fallback={loading}><AccountPage onGuest={continueAsGuest}/></React.Suspense>;
  const entry=checking?loading:(signedIn||guest?<Gallery signedIn={signedIn}/>:account);
- return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/order-history" element={<React.Suspense fallback={loading}><OrderHistory/></React.Suspense>}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/></Routes>;
+ return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/order-history" element={<React.Suspense fallback={loading}><OrderHistory/></React.Suspense>}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/><Route path="/artwork/:slug" element={<React.Suspense fallback={loading}><ArtworkPage/></React.Suspense>}/><Route path="/artist/:slug" element={<React.Suspense fallback={loading}><ArtistPage/></React.Suspense>}/></Routes>;
 }
