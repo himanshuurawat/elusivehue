@@ -3,16 +3,34 @@ import {Link, useParams} from 'react-router-dom';
 import {artEmber, artGlitch, artFigure, artVessel, artContour, artCollage} from './artwork';
 import {slugFor} from './publicSlug';
 export {slugFor};
+import {type SupabaseClient} from '@supabase/supabase-js';
+import {
+  publicClient,
+  loadArtworkBundle,
+  loadArtistBundle,
+  saveFollow,
+  sharedPhotoUrl,
+  artworkParam,
+  artistParam,
+  type ArtworkBundle,
+  type ArtistBundle,
+  type SharedArtwork,
+} from './public-service';
 import './public-pages.css';
 
 /*
- * DEMO PREVIEW ONLY (not committed, not deployed).
  * Public artwork page + public artist profile + Follow, per the user's
  * voice-note direction: artists keep their own work, share it publicly,
  * collectors can follow artists; buying comes last and is absent here.
- * Every name, artwork, price, bio and follower count below is dummy
- * content. Follower counts are illustrative popularity numbers only —
- * they are not proof of originality or authenticity.
+ *
+ * Two data sources:
+ * - REAL: artworks the owner shared publicly and artist profiles load
+ *   from the connected project (public-service.ts); Follow is saved to
+ *   the account. Shown whenever the URL matches real shared content.
+ * - DEMO: the arrays below are the approved dummy preview, used when no
+ *   real shared artwork/artist matches. Demo names, prices, bios and
+ *   follower counts are illustrative only - not proof of originality or
+ *   authenticity - and every demo surface is labeled demo.
  */
 
 type PublicArtist = {
@@ -267,16 +285,31 @@ function LoadingWell({ready, size, label}: {ready: boolean; size: number; label:
   );
 }
 
-function FollowButton({followers, delay}: {followers: number; delay?: string}) {
-  const [following, setFollowing] = useState(false);
+function FollowButton({
+  followers,
+  following,
+  onFollow,
+  delay,
+  demo,
+}: {
+  followers: number;
+  following: boolean;
+  onFollow: () => void;
+  delay?: string;
+  demo?: boolean;
+}) {
   const [pop, setPop] = useState(false);
   const [tick, setTick] = useState(0);
+  const wasFollowing = useRef(following);
+  useEffect(() => {
+    if (!wasFollowing.current && following) setPop(true);
+    wasFollowing.current = following;
+  }, [following]);
   useEffect(() => {
     if (!pop) return;
     const id = setTimeout(() => setPop(false), 780);
     return () => clearTimeout(id);
   }, [pop]);
-  const count = followers + (following ? 1 : 0);
   return (
     <div className="pub-follow-row pub-rise" style={rise(delay ?? '0s')}>
       <button
@@ -284,9 +317,7 @@ function FollowButton({followers, delay}: {followers: number; delay?: string}) {
         className={`pub-follow${following ? ' is-following' : ''}${pop ? ' just-followed' : ''}`}
         aria-pressed={following}
         onClick={() => {
-          const next = !following;
-          setFollowing(next);
-          if (next) setPop(true);
+          onFollow();
           setTick((t) => t + 1);
         }}
       >
@@ -294,11 +325,70 @@ function FollowButton({followers, delay}: {followers: number; delay?: string}) {
       </button>
       <span className="pub-follow-count">
         <span key={tick} className="pub-count-num">
-          {count.toLocaleString('en-IN')}
+          {followers.toLocaleString('en-IN')}
         </span>{' '}
-        followers <em>demo</em>
+        followers {demo ? <em>demo</em> : null}
       </span>
     </div>
+  );
+}
+
+/* Demo pages keep their illustrative, in-memory Follow. */
+function DemoFollow({followers, delay}: {followers: number; delay?: string}) {
+  const [following, setFollowing] = useState(false);
+  return (
+    <FollowButton
+      followers={followers + (following ? 1 : 0)}
+      following={following}
+      onFollow={() => setFollowing((f) => !f)}
+      delay={delay}
+      demo
+    />
+  );
+}
+
+/*
+ * RealFollow: persisted Follow on a real shared artist. Optimistic toggle
+ * with rollback when the save fails; sign-in is required to follow.
+ */
+function RealFollow({
+  client,
+  artistId,
+  initialFollowers,
+  initialFollowing,
+  delay,
+}: {
+  client: SupabaseClient;
+  artistId: string;
+  initialFollowers: number;
+  initialFollowing: boolean;
+  delay?: string;
+}) {
+  const [followers, setFollowers] = useState(initialFollowers);
+  const [following, setFollowing] = useState(initialFollowing);
+  const [error, setError] = useState('');
+  const toggle = () => {
+    const next = !following;
+    setFollowing(next);
+    setFollowers((c) => c + (next ? 1 : -1));
+    setError('');
+    saveFollow(client, artistId, next).catch((e) => {
+      setFollowing(!next);
+      setFollowers((c) => c + (next ? -1 : 1));
+      setError(e instanceof Error ? e.message : 'Could not save that. Try again.');
+    });
+  };
+  return (
+    <>
+      <FollowButton followers={followers} following={following} onFollow={toggle} delay={delay} />
+      {error === 'Sign in to follow artists.' ? (
+        <p className="pub-note pub-rise">
+          Sign in to follow artists. <Link to="/account">Go to sign in ↗</Link>
+        </p>
+      ) : error ? (
+        <p className="pub-note pub-rise">{error}</p>
+      ) : null}
+    </>
   );
 }
 
@@ -316,16 +406,144 @@ function PublicHeader() {
   );
 }
 
-function PublicFooter() {
+function PublicFooter({demo}: {demo?: boolean}) {
   return (
     <footer className="pub-foot pub-rise" style={rise('0.68s')}>
-      Demo preview only. Artwork, artist, price and followers are dummy content. Nothing is for sale.
+      {demo
+        ? 'Demo preview only. Artwork, artist, price and followers are dummy content. Nothing is for sale.'
+        : 'Shared by the artist. Follows are saved to accounts. Buying is not live yet.'}
     </footer>
   );
 }
 
+/* Loading shell while a real lookup is in flight. */
+function PublicLoading({label}: {label: string}) {
+  return (
+    <div className="pub-space">
+      <PublicHeader />
+      <main className="pub-art">
+        <LoadingWell ready={false} size={64} label={label} />
+      </main>
+    </div>
+  );
+}
+
 export function ArtworkPage() {
-  const {slug} = useParams<{slug: string}>();
+  const {slug = ''} = useParams<{slug: string}>();
+  const client = publicClient();
+  const [state, setState] = useState<{bundle: ArtworkBundle | null; photo: string; checked: boolean}>({
+    bundle: null,
+    photo: '',
+    checked: !client,
+  });
+
+  useEffect(() => {
+    setState({bundle: null, photo: '', checked: !client});
+    window.scrollTo(0, 0);
+    if (!client) return;
+    let live = true;
+    loadArtworkBundle(client, slug)
+      .then(async (bundle) => {
+        let photo = '';
+        if (bundle) {
+          try {
+            photo = await sharedPhotoUrl(client, bundle.work.image_path);
+          } catch {
+            photo = '';
+          }
+        }
+        if (live) setState({bundle, photo, checked: true});
+      })
+      .catch(() => {
+        if (live) setState({bundle: null, photo: '', checked: true});
+      });
+    return () => {
+      live = false;
+    };
+  }, [slug]);
+
+  if (!state.checked) return <PublicLoading label="Opening the artwork" />;
+  if (state.bundle && client) return <RealArtwork key={state.bundle.work.id} bundle={state.bundle} photo={state.photo} client={client} />;
+  return <DemoArtwork slug={slug} />;
+}
+
+/* Real shared artwork: data from the connected project, photo via a
+ * signed URL of the same stored file (no duplicate copy). */
+function RealArtwork({bundle, photo, client}: {bundle: ArtworkBundle; photo: string; client: SupabaseClient}) {
+  const {work, artist} = bundle;
+  const name = artist.display_name || (artist.username ? '@' + artist.username : 'Artist');
+  const [imgReady, setImgReady] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) setImgReady(true);
+  }, [photo]);
+
+  return (
+    <div className="pub-space">
+      <PublicHeader />
+      <main className="pub-art">
+        <figure className="pub-art-figure pub-rise" style={rise('0.02s')}>
+          <LoadingWell ready={imgReady && Boolean(photo)} size={64} label="Opening the artwork" />
+          {photo ? (
+            <img
+              ref={imgRef}
+              src={photo}
+              alt={`${work.title} by ${name}`}
+              onLoad={() => setImgReady(true)}
+              className={imgReady ? 'is-ready' : ''}
+            />
+          ) : null}
+        </figure>
+        <section className="pub-art-info">
+          <p className="pub-kicker pub-rise" style={rise('0.12s')}>
+            Public artwork
+          </p>
+          <h1 className="pub-title pub-rise" style={rise('0.18s')}>
+            {work.title}
+          </h1>
+          <p className="pub-kind pub-rise" style={rise('0.24s')}>
+            {work.format} · {work.medium}
+          </p>
+          <p className="pub-kind pub-rise" style={rise('0.28s')}>
+            {work.size_class} · {work.width} × {work.height} {work.unit}
+          </p>
+          <p className="pub-price pub-rise" style={rise('0.32s')}>
+            ₹{work.asking_price_inr.toLocaleString('en-IN')}
+            <span className="pub-price-note">asking price</span>
+          </p>
+          <p className="pub-note pub-rise" style={rise('0.44s')}>
+            Buying is not live yet. This is the artwork {name.split(' ')[0]} chose to share.
+          </p>
+          <Link to={`/artist/${artistParam(artist)}`} className="pub-artist-card pub-rise" style={rise('0.5s')}>
+            <span className="pub-card-refract" aria-hidden="true" />
+            <span className="pub-avatar" aria-hidden="true">
+              {initials(name)}
+            </span>
+            <span className="pub-artist-meta">
+              <strong>{name}</strong>
+              <small>{artist.username ? '@' + artist.username : 'Shared artist'}</small>
+            </span>
+            <span className="pub-artist-open">View artist ↗</span>
+          </Link>
+          <RealFollow
+            key={artist.id}
+            client={client}
+            artistId={artist.id}
+            initialFollowers={bundle.followers}
+            initialFollowing={bundle.following}
+            delay="0.58s"
+          />
+        </section>
+      </main>
+      <PublicFooter />
+    </div>
+  );
+}
+
+/* Demo artwork page: the approved dummy preview, unchanged. */
+function DemoArtwork({slug}: {slug: string}) {
   const work = publicWorks.find((w) => w.slug === slug) ?? publicWorks[0];
   const artist = artists.find((a) => a.slug === work.artistSlug) ?? artists[0];
   const [imgReady, setImgReady] = useState(false);
@@ -333,7 +551,6 @@ export function ArtworkPage() {
 
   useEffect(() => {
     setImgReady(false);
-    window.scrollTo(0, 0);
   }, [slug]);
 
   useEffect(() => {
@@ -388,15 +605,15 @@ export function ArtworkPage() {
             </span>
             <span className="pub-artist-open">View artist ↗</span>
           </Link>
-          <FollowButton followers={artist.followers} delay="0.58s" />
+          <DemoFollow followers={artist.followers} delay="0.58s" />
         </section>
       </main>
-      <PublicFooter />
+      <PublicFooter demo />
     </div>
   );
 }
 
-function WorkCard({work, delay}: {work: PublicWork; delay?: string}) {
+function WorkCard({to, img, title, kind, price, delay}: {to: string; img: string; title: string; kind: string; price: string; delay?: string}) {
   const [ready, setReady] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   useEffect(() => {
@@ -404,35 +621,162 @@ function WorkCard({work, delay}: {work: PublicWork; delay?: string}) {
     if (img && img.complete && img.naturalWidth > 0) setReady(true);
   }, []);
   return (
-    <Link to={`/artwork/${work.slug}`} className="pub-work-card pub-rise" style={rise(delay ?? '0s')}>
+    <Link to={to} className="pub-work-card pub-rise" style={rise(delay ?? '0s')}>
       <div className="pub-work-thumb">
         <LoadingWell ready={ready} size={40} label="Loading" />
-        <img
-          ref={imgRef}
-          src={work.img}
-          alt={work.title}
-          loading="lazy"
-          onLoad={() => setReady(true)}
-          className={ready ? 'is-ready' : ''}
-        />
+        <img ref={imgRef} src={img} alt={title} loading="lazy" onLoad={() => setReady(true)} className={ready ? 'is-ready' : ''} />
+      </div>
+      <span className="pub-work-meta">
+        <strong>{title}</strong>
+        <small>{kind}</small>
+      </span>
+      <span className="pub-work-price">{price}</span>
+    </Link>
+  );
+}
+
+function RealWorkCard({work, url, delay}: {work: SharedArtwork; url: string; delay?: string}) {
+  const [ready, setReady] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) setReady(true);
+  }, [url]);
+  return (
+    <Link to={`/artwork/${artworkParam(work)}`} className="pub-work-card pub-rise" style={rise(delay ?? '0s')}>
+      <div className="pub-work-thumb">
+        <LoadingWell ready={ready && Boolean(url)} size={40} label="Loading" />
+        {url ? (
+          <img ref={imgRef} src={url} alt={work.title} loading="lazy" onLoad={() => setReady(true)} className={ready ? 'is-ready' : ''} />
+        ) : null}
       </div>
       <span className="pub-work-meta">
         <strong>{work.title}</strong>
-        <small>{work.kind}</small>
+        <small>
+          {work.format} · {work.medium}
+        </small>
       </span>
-      <span className="pub-work-price">{work.price}</span>
+      <span className="pub-work-price">₹{work.asking_price_inr.toLocaleString('en-IN')}</span>
     </Link>
   );
 }
 
 export function ArtistPage() {
-  const {slug} = useParams<{slug: string}>();
-  const artist = artists.find((a) => a.slug === slug) ?? artists[0];
-  const works = publicWorks.filter((w) => w.artistSlug === artist.slug);
+  const {slug = ''} = useParams<{slug: string}>();
+  const client = publicClient();
+  const [state, setState] = useState<{bundle: ArtistBundle | null; photos: Record<string, string>; checked: boolean}>({
+    bundle: null,
+    photos: {},
+    checked: !client,
+  });
 
   useEffect(() => {
+    setState({bundle: null, photos: {}, checked: !client});
     window.scrollTo(0, 0);
+    if (!client) return;
+    let live = true;
+    loadArtistBundle(client, slug)
+      .then(async (bundle) => {
+        const photos: Record<string, string> = {};
+        if (bundle) {
+          await Promise.all(
+            bundle.works.map(async (w) => {
+              try {
+                photos[w.id] = await sharedPhotoUrl(client, w.image_path);
+              } catch {
+                /* photo stays blank; card still links through */
+              }
+            }),
+          );
+        }
+        if (live) setState({bundle, photos, checked: true});
+      })
+      .catch(() => {
+        if (live) setState({bundle: null, photos: {}, checked: true});
+      });
+    return () => {
+      live = false;
+    };
   }, [slug]);
+
+  if (!state.checked) return <PublicLoading label="Opening the artist" />;
+  if (state.bundle && client) return <RealArtist key={state.bundle.profile.id} bundle={state.bundle} photos={state.photos} client={client} />;
+  return <DemoArtist slug={slug} />;
+}
+
+/* Real public artist profile: shown only while the artist has shared work. */
+function RealArtist({bundle, photos, client}: {bundle: ArtistBundle; photos: Record<string, string>; client: SupabaseClient}) {
+  const {profile, works} = bundle;
+  const name = profile.display_name || (profile.username ? '@' + profile.username : 'Artist');
+  return (
+    <div className="pub-space">
+      <PublicHeader />
+      <main className="pub-profile-space">
+        <header className="pub-profile">
+          <span className="pub-avatar pub-avatar-lg pub-rise" style={rise('0.05s')} aria-hidden="true">
+            {initials(name)}
+          </span>
+          <div className="pub-profile-main">
+            <p className="pub-kicker pub-rise" style={rise('0.1s')}>
+              Artist · public profile
+            </p>
+            <h1 className="pub-title pub-rise" style={rise('0.16s')}>
+              {name}
+            </h1>
+            {profile.username ? (
+              <p className="pub-kind pub-rise" style={rise('0.22s')}>
+                @{profile.username}
+              </p>
+            ) : null}
+            {profile.bio ? (
+              <p className="pub-bio pub-rise" style={rise('0.28s')}>
+                {profile.bio}
+              </p>
+            ) : null}
+          </div>
+          <div className="pub-profile-side">
+            <RealFollow
+              key={profile.id}
+              client={client}
+              artistId={profile.id}
+              initialFollowers={bundle.followers}
+              initialFollowing={bundle.following}
+              delay="0.34s"
+            />
+            <p className="pub-follow-note pub-rise" style={rise('0.4s')}>
+              Followers show popularity, not proof of originality.
+            </p>
+          </div>
+        </header>
+        <section className="pub-works">
+          <div className="pub-works-head pub-rise" style={rise('0.44s')}>
+            <h2 className="pub-works-title">Shared works</h2>
+            <span className="pub-works-count">
+              {works.length} {works.length === 1 ? 'piece' : 'pieces'}
+            </span>
+          </div>
+          {works.length > 0 ? (
+            <div className="pub-grid">
+              {works.map((w, i) => (
+                <RealWorkCard key={w.id} work={w} url={photos[w.id] ?? ''} delay={`${(0.5 + i * 0.07).toFixed(2)}s`} />
+              ))}
+            </div>
+          ) : (
+            <p className="pub-note pub-rise" style={rise('0.5s')}>
+              Nothing shared yet. Works will appear here as {name.split(' ')[0]} shares them.
+            </p>
+          )}
+        </section>
+      </main>
+      <PublicFooter />
+    </div>
+  );
+}
+
+/* Demo artist page: the approved dummy preview, unchanged. */
+function DemoArtist({slug}: {slug: string}) {
+  const artist = artists.find((a) => a.slug === slug) ?? artists[0];
+  const works = publicWorks.filter((w) => w.artistSlug === artist.slug);
 
   return (
     <div className="pub-space">
@@ -457,7 +801,7 @@ export function ArtistPage() {
             </p>
           </div>
           <div className="pub-profile-side">
-            <FollowButton followers={artist.followers} delay="0.34s" />
+            <DemoFollow followers={artist.followers} delay="0.34s" />
             <p className="pub-follow-note pub-rise" style={rise('0.4s')}>
               Followers show popularity, not proof of originality.
             </p>
@@ -473,7 +817,15 @@ export function ArtistPage() {
           {works.length > 0 ? (
             <div className="pub-grid">
               {works.map((w, i) => (
-                <WorkCard key={w.slug} work={w} delay={`${(0.5 + i * 0.07).toFixed(2)}s`} />
+                <WorkCard
+                  key={w.slug}
+                  to={`/artwork/${w.slug}`}
+                  img={w.img}
+                  title={w.title}
+                  kind={w.kind}
+                  price={w.price}
+                  delay={`${(0.5 + i * 0.07).toFixed(2)}s`}
+                />
               ))}
             </div>
           ) : (
@@ -483,7 +835,7 @@ export function ArtistPage() {
           )}
         </section>
       </main>
-      <PublicFooter />
+      <PublicFooter demo />
     </div>
   );
 }
