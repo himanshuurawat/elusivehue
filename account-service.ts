@@ -60,6 +60,7 @@ export function accountRepository(client:SupabaseClient){
   async myArtworks(){const id=await owner();const {data,error}=await client.from('artworks').select('*').eq('owner_id',id).order('created_at',{ascending:false}).limit(50);fail(error);return data as Artwork[];},
   async draft(fields:ArtworkFields){const id=await owner(),value=checkArtwork(fields,id);const {data,error}=await client.from('artworks').insert({...value,owner_id:id,status:'draft'}).select().single();fail(error);return data as Artwork;},
   async edit(id:string,fields:ArtworkFields){const uid=await owner(),value=checkArtwork(fields,uid);const {data,error}=await client.from('artworks').update(value).eq('id',id).eq('owner_id',uid).select().single();fail(error);return data as Artwork;},
+  async setStatus(id:string,status:'draft'|'published'){const uid=await owner();const {data,error}=await client.from('artworks').update({status}).eq('id',id).eq('owner_id',uid).select().single();fail(error);return data as Artwork;},
   async uploadPhoto(file:File){
    const uid=await owner(),extension:Record<string,string>={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
    if(!extension[file.type]||file.size>8388608||file.size===0)throw new Error('Choose a JPG, PNG or WebP image up to 8MB.');
@@ -68,4 +69,4 @@ export function accountRepository(client:SupabaseClient){
   },
   async previewPhoto(path:string){const {data,error}=await client.storage.from('artwork-photos').createSignedUrl(path,300);fail(error);return data!.signedUrl;}
  };
-    }
+}
