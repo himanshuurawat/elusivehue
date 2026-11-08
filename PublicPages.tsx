@@ -151,6 +151,10 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
+function rise(delay: string): React.CSSProperties {
+  return {'--d': delay} as React.CSSProperties;
+}
+
 /*
  * DottedOrb: a small canvas particle orb, inspired by the user's
  * reference clip of dotted state orbs. Used ONLY for genuine waits
@@ -220,21 +224,58 @@ function DottedOrb({size, label}: {size: number; label: string}) {
   );
 }
 
-function FollowButton({followers}: {followers: number}) {
+/*
+ * LoadingWell: shows the orb while an image is genuinely loading, then
+ * fades out once the image is ready (kept mounted ~0.5s for the fade).
+ */
+function LoadingWell({ready, size, label}: {ready: boolean; size: number; label: string}) {
+  const [gone, setGone] = useState(false);
+  useEffect(() => {
+    if (!ready) {
+      setGone(false);
+      return;
+    }
+    const id = setTimeout(() => setGone(true), 520);
+    return () => clearTimeout(id);
+  }, [ready]);
+  if (gone) return null;
+  return (
+    <div className={`pub-art-loading${ready ? ' is-done' : ''}`}>
+      <DottedOrb size={size} label={label} />
+    </div>
+  );
+}
+
+function FollowButton({followers, delay}: {followers: number; delay?: string}) {
   const [following, setFollowing] = useState(false);
+  const [pop, setPop] = useState(false);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (!pop) return;
+    const id = setTimeout(() => setPop(false), 780);
+    return () => clearTimeout(id);
+  }, [pop]);
   const count = followers + (following ? 1 : 0);
   return (
-    <div className="pub-follow-row">
+    <div className="pub-follow-row pub-rise" style={rise(delay ?? '0s')}>
       <button
         type="button"
-        className={`pub-follow${following ? ' is-following' : ''}`}
+        className={`pub-follow${following ? ' is-following' : ''}${pop ? ' just-followed' : ''}`}
         aria-pressed={following}
-        onClick={() => setFollowing((f) => !f)}
+        onClick={() => {
+          const next = !following;
+          setFollowing(next);
+          if (next) setPop(true);
+          setTick((t) => t + 1);
+        }}
       >
         {following ? 'Following ✓' : 'Follow'}
       </button>
       <span className="pub-follow-count">
-        {count.toLocaleString('en-IN')} followers <em>demo</em>
+        <span key={tick} className="pub-count-num">
+          {count.toLocaleString('en-IN')}
+        </span>{' '}
+        followers <em>demo</em>
       </span>
     </div>
   );
@@ -243,10 +284,10 @@ function FollowButton({followers}: {followers: number}) {
 function PublicHeader() {
   return (
     <header className="pub-top">
-      <Link to="/gallery" className="pub-wordmark">
+      <Link to="/gallery" className="pub-wordmark pub-rise">
         elusive<i>·</i>hue
       </Link>
-      <Link to="/gallery" className="pub-back">
+      <Link to="/gallery" className="pub-back pub-rise" style={rise('0.06s')}>
         Back to the gallery
       </Link>
     </header>
@@ -255,7 +296,7 @@ function PublicHeader() {
 
 function PublicFooter() {
   return (
-    <footer className="pub-foot">
+    <footer className="pub-foot pub-rise" style={rise('0.68s')}>
       Demo preview only. Artwork, artist, price and followers are dummy content. Nothing is for sale.
     </footer>
   );
@@ -266,40 +307,53 @@ export function ArtworkPage() {
   const work = publicWorks.find((w) => w.slug === slug) ?? publicWorks[0];
   const artist = artists.find((a) => a.slug === work.artistSlug) ?? artists[0];
   const [imgReady, setImgReady] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     setImgReady(false);
     window.scrollTo(0, 0);
   }, [slug]);
 
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) setImgReady(true);
+  }, [slug]);
+
   return (
     <div className="pub-space">
       <PublicHeader />
       <main className="pub-art">
-        <figure className="pub-art-figure">
-          {!imgReady && (
-            <div className="pub-art-loading">
-              <DottedOrb size={64} label="Opening the artwork" />
-            </div>
-          )}
+        <figure className="pub-art-figure pub-rise" style={rise('0.02s')}>
+          <LoadingWell ready={imgReady} size={64} label="Opening the artwork" />
           <img
+            ref={imgRef}
             src={work.img}
             alt={`${work.title} by ${artist.name}`}
             onLoad={() => setImgReady(true)}
-            style={{opacity: imgReady ? 1 : 0}}
+            className={imgReady ? 'is-ready' : ''}
           />
         </figure>
         <section className="pub-art-info">
-          <p className="pub-kicker">Public artwork · demo</p>
-          <h1 className="pub-title">{work.title}</h1>
-          <p className="pub-kind">{work.kind}</p>
-          <p className="pub-price">
+          <p className="pub-kicker pub-rise" style={rise('0.12s')}>
+            Public artwork · demo
+          </p>
+          <h1 className="pub-title pub-rise" style={rise('0.18s')}>
+            {work.title}
+          </h1>
+          <p className="pub-kind pub-rise" style={rise('0.24s')}>
+            {work.kind}
+          </p>
+          <p className="pub-price pub-rise" style={rise('0.32s')}>
             {work.price}
             <span className="pub-price-note">illustrative</span>
           </p>
-          <p className="pub-story">{work.story}</p>
-          <p className="pub-note">Buying is not live yet. This page previews how a shared artwork will look.</p>
-          <Link to={`/artist/${artist.slug}`} className="pub-artist-card">
+          <p className="pub-story pub-rise" style={rise('0.38s')}>
+            {work.story}
+          </p>
+          <p className="pub-note pub-rise" style={rise('0.44s')}>
+            Buying is not live yet. This page previews how a shared artwork will look.
+          </p>
+          <Link to={`/artist/${artist.slug}`} className="pub-artist-card pub-rise" style={rise('0.5s')}>
             <span className="pub-avatar" aria-hidden="true">
               {initials(artist.name)}
             </span>
@@ -311,7 +365,7 @@ export function ArtworkPage() {
             </span>
             <span className="pub-artist-open">View artist ↗</span>
           </Link>
-          <FollowButton followers={artist.followers} />
+          <FollowButton followers={artist.followers} delay="0.58s" />
         </section>
       </main>
       <PublicFooter />
@@ -319,17 +373,25 @@ export function ArtworkPage() {
   );
 }
 
-function WorkCard({work}: {work: PublicWork}) {
+function WorkCard({work, delay}: {work: PublicWork; delay?: string}) {
   const [ready, setReady] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) setReady(true);
+  }, []);
   return (
-    <Link to={`/artwork/${work.slug}`} className="pub-work-card">
+    <Link to={`/artwork/${work.slug}`} className="pub-work-card pub-rise" style={rise(delay ?? '0s')}>
       <div className="pub-work-thumb">
-        {!ready && (
-          <div className="pub-art-loading">
-            <DottedOrb size={40} label="Loading" />
-          </div>
-        )}
-        <img src={work.img} alt={work.title} loading="lazy" onLoad={() => setReady(true)} style={{opacity: ready ? 1 : 0}} />
+        <LoadingWell ready={ready} size={40} label="Loading" />
+        <img
+          ref={imgRef}
+          src={work.img}
+          alt={work.title}
+          loading="lazy"
+          onLoad={() => setReady(true)}
+          className={ready ? 'is-ready' : ''}
+        />
       </div>
       <span className="pub-work-meta">
         <strong>{work.title}</strong>
@@ -354,24 +416,32 @@ export function ArtistPage() {
       <PublicHeader />
       <main className="pub-profile-space">
         <header className="pub-profile">
-          <span className="pub-avatar pub-avatar-lg" aria-hidden="true">
+          <span className="pub-avatar pub-avatar-lg pub-rise" style={rise('0.05s')} aria-hidden="true">
             {initials(artist.name)}
           </span>
           <div className="pub-profile-main">
-            <p className="pub-kicker">Artist · public profile · demo</p>
-            <h1 className="pub-title">{artist.name}</h1>
-            <p className="pub-kind">
+            <p className="pub-kicker pub-rise" style={rise('0.1s')}>
+              Artist · public profile · demo
+            </p>
+            <h1 className="pub-title pub-rise" style={rise('0.16s')}>
+              {artist.name}
+            </h1>
+            <p className="pub-kind pub-rise" style={rise('0.22s')}>
               {artist.discipline} · {artist.location}
             </p>
-            <p className="pub-bio">{artist.bio}</p>
+            <p className="pub-bio pub-rise" style={rise('0.28s')}>
+              {artist.bio}
+            </p>
           </div>
           <div className="pub-profile-side">
-            <FollowButton followers={artist.followers} />
-            <p className="pub-follow-note">Followers show popularity, not proof of originality.</p>
+            <FollowButton followers={artist.followers} delay="0.34s" />
+            <p className="pub-follow-note pub-rise" style={rise('0.4s')}>
+              Followers show popularity, not proof of originality.
+            </p>
           </div>
         </header>
         <section className="pub-works">
-          <div className="pub-works-head">
+          <div className="pub-works-head pub-rise" style={rise('0.44s')}>
             <h2 className="pub-works-title">Shared works</h2>
             <span className="pub-works-count">
               {works.length} {works.length === 1 ? 'piece' : 'pieces'} · demo
@@ -379,12 +449,14 @@ export function ArtistPage() {
           </div>
           {works.length > 0 ? (
             <div className="pub-grid">
-              {works.map((w) => (
-                <WorkCard key={w.slug} work={w} />
+              {works.map((w, i) => (
+                <WorkCard key={w.slug} work={w} delay={`${(0.5 + i * 0.07).toFixed(2)}s`} />
               ))}
             </div>
           ) : (
-            <p className="pub-note">Nothing shared yet. Works will appear here as {artist.name.split(' ')[0]} shares them.</p>
+            <p className="pub-note pub-rise" style={rise('0.5s')}>
+              Nothing shared yet. Works will appear here as {artist.name.split(' ')[0]} shares them.
+            </p>
           )}
         </section>
       </main>
