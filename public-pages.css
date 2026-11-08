@@ -76,6 +76,24 @@
   letter-spacing: 0.03em;
 }
 
+/* --- Motion: staggered page entry --- */
+
+@keyframes pub-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pub-rise {
+  animation: pub-rise 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation-delay: var(--d, 0s);
+}
+
 /* --- Artwork page --- */
 
 .pub-art {
@@ -105,7 +123,19 @@
   width: 100%;
   aspect-ratio: 3 / 4;
   object-fit: cover;
-  transition: opacity 0.5s ease;
+  opacity: 0;
+  transform: scale(1.035);
+  filter: blur(6px);
+  transition:
+    opacity 0.7s ease,
+    transform 1s cubic-bezier(0.22, 0.61, 0.36, 1),
+    filter 0.7s ease;
+}
+
+.pub-art-figure img.is-ready {
+  opacity: 1;
+  transform: none;
+  filter: none;
 }
 
 .pub-art-loading {
@@ -113,6 +143,11 @@
   inset: 0;
   display: grid;
   place-items: center;
+  transition: opacity 0.45s ease;
+}
+
+.pub-art-loading.is-done {
+  opacity: 0;
 }
 
 .pub-orb {
@@ -250,6 +285,7 @@
 
 .pub-follow {
   appearance: none;
+  position: relative;
   border: 1px solid #d0d5ab;
   background: #d0d5ab;
   color: #141312;
@@ -261,7 +297,10 @@
   border-radius: 999px;
   cursor: pointer;
   min-height: 44px;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
 }
 
 .pub-follow.is-following {
@@ -273,9 +312,66 @@
   filter: brightness(1.06);
 }
 
+.pub-follow:active {
+  transform: scale(0.95);
+}
+
+@keyframes pub-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pub-follow.just-followed {
+  animation: pub-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pub-ring {
+  from {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+.pub-follow.just-followed::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 999px;
+  border: 1px solid #d0d5ab;
+  animation: pub-ring 0.7s ease-out both;
+  pointer-events: none;
+}
+
 .pub-follow-count {
   font-size: 12px;
   color: #a39e9c;
+}
+
+.pub-count-num {
+  display: inline-block;
+  animation: pub-count 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes pub-count {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .pub-follow-count em {
@@ -392,10 +488,19 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: opacity 0.5s ease, transform 0.4s ease;
+  opacity: 0;
+  transform: scale(1.02);
+  transition:
+    opacity 0.55s ease,
+    transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-.pub-work-card:hover .pub-work-thumb img {
+.pub-work-thumb img.is-ready {
+  opacity: 1;
+  transform: none;
+}
+
+.pub-work-card:hover .pub-work-thumb img.is-ready {
   transform: scale(1.02);
 }
 
@@ -473,13 +578,45 @@
   }
 }
 
+/* --- Reduced motion: everything settles instantly --- */
+
 @media (prefers-reduced-motion: reduce) {
+  .pub-rise {
+    animation: none;
+  }
+
   .pub-art-figure img,
   .pub-work-thumb img {
     transition: none;
+    transform: none;
+    filter: none;
   }
 
-  .pub-work-card:hover .pub-work-thumb img {
+  .pub-art-loading {
+    transition: none;
+  }
+
+  .pub-work-card:hover .pub-work-thumb img.is-ready {
     transform: none;
+  }
+
+  .pub-follow {
+    transition: none;
+  }
+
+  .pub-follow:active {
+    transform: none;
+  }
+
+  .pub-follow.just-followed {
+    animation: none;
+  }
+
+  .pub-follow.just-followed::after {
+    content: none;
+  }
+
+  .pub-count-num {
+    animation: none;
   }
 }
