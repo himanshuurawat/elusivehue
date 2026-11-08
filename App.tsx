@@ -1,5 +1,7 @@
 import React, {useState} from 'react';
 import {Routes, Route} from 'react-router-dom';
+const OrderHistory=React.lazy(()=>import('./OrderHistory').then(m=>({default:m.OrderHistory})));
+const MyArtworks=React.lazy(()=>import('./ArtworkStudio').then(m=>({default:m.MyArtworks})));
 const AccountPage=React.lazy(()=>import('./AccountPage').then(m=>({default:m.AccountPage}))); 
 import {heroWide,artEmber,artGlitch,artFigure,artVessel,artContour,artCollage,resaleCamera,resaleBrushes,resaleJacket} from './artwork';
 const DOT = '\u00B7';
@@ -356,7 +358,7 @@ function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn
                 </button>)}
             </div>
         </section>
-        <section className="g-section listing-invite"><div><p className="kicker">For the artist</p><h2 className="display">Your work belongs here.</h2><p>Try building a listing, then see it from the buyer's side.</p></div><button type="button" className="gallery-cta" onClick={()=>setListingOpen(true)}>List an artwork · demo ↗</button></section>
+        <section className="g-section listing-invite"><div><p className="kicker">For the artist</p><h2 className="display">Your work belongs here.</h2><p>{signedIn?'Save your photo and details as a private draft in your account.':'Explore a local listing preview. Sign in to save your own work.'}</p></div>{signedIn?<a className="gallery-cta" href="#/my-artworks">My artworks ↗</a>:<button type="button" className="gallery-cta" onClick={()=>setListingOpen(true)}>Try the listing preview ↗</button>}</section>
         <section className="g-section">
             <div className="g-feature"><div className="feature-image"><img src={artFigure} alt="Movement III, illustrative charcoal figure study" loading="lazy" /></div><div className="scroll-reveal">
                 <p className="kicker">02 / A closer look</p><h3 className="display">A study<br />in movement.</h3>
@@ -365,7 +367,7 @@ function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn
             </div></div>
         </section>
         <div id="secondhand"><ResaleShelf /></div>
-        <section className="g-section project-note"><p className="kicker">The idea behind Elusive Hue</p><h2 className="display">Room for art.<br />Room for stories.</h2><p>A planned home for physical artwork and digital editions, with a separate shelf for personal belongings. The two collections stay distinct.</p><details><summary>What works in this preview?</summary><p>Browse the artwork, filter physical and digital pieces, open full-image and detail-crop views, switch the theme and explore the layered scroll scene. Artwork content is illustrative. Email and Google accounts and editable profiles are available. There are no orders, payments or seller services.</p></details></section>
+        <section className="g-section project-note"><p className="kicker">The idea behind Elusive Hue</p><h2 className="display">Room for art.<br />Room for stories.</h2><p>A planned home for physical artwork and digital editions, with a separate shelf for personal belongings. The two collections stay distinct.</p><details><summary>What works in this preview?</summary><p>Browse the artwork, filter physical and digital pieces, open full-image and detail-crop views, switch the theme and explore the layered scroll scene. Artwork content is illustrative. Email and Google accounts and editable profiles are available. Signed-in artists can save private artwork drafts in My artworks. Public listings, orders and payments are not available.</p></details></section>
         <footer className="g-foot"><Wordmark /><a className="developer-credit" href="https://github.com/himanshuurawat" target="_blank" rel="noopener noreferrer">Developed by Himanshu Rawat <span aria-hidden="true">↗</span></a><nav aria-label="Legal"><a href="/privacy.html">Privacy policy</a><a href="/terms.html">Terms of use</a></nav><p className="meta">Midnight Gallery / selected direction. Frontend preview only. All artworks, artists, mediums, prices and resale items are dummy content. Nothing is for sale here.</p><button className="text-link" type="button" onClick={() => jump('gallery-top')}>Back to the top ↑</button></footer>
         {listingOpen&&<ArtistListing onClose={()=>setListingOpen(false)}/>}
         <ArtworkPreview work={selected} onClose={() => setSelected(null)} />
@@ -393,5 +395,5 @@ export function App(){
  const loading=<div style={{background:'#0b0b0c',color:'#efeee8',minHeight:'100vh',padding:32}} role="status">Opening your space...</div>;
  const account=<React.Suspense fallback={loading}><AccountPage onGuest={continueAsGuest}/></React.Suspense>;
  const entry=checking?loading:(signedIn||guest?<Gallery signedIn={signedIn}/>:account);
- return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/></Routes>;
+ return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/order-history" element={<React.Suspense fallback={loading}><OrderHistory/></React.Suspense>}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/></Routes>;
 }

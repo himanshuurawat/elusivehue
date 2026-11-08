@@ -1,0 +1,8 @@
+import React from 'react';
+import {Link} from 'react-router-dom';
+import {artContour} from './artwork';
+import './profile-glass.css';
+
+export function OrderHistory(){
+ return <main className="profile-space order-space"><div className="profile-scene" aria-hidden="true"><img className="profile-landscape" src={artContour} alt=""/><div className="profile-backdrop-shade"/></div><nav className="profile-topbar"><Link className="profile-wordmark" to="/">elusive · hue</Link><Link className="profile-back" to="/account">Your account <span>↗</span></Link></nav><section className="order-body"><p className="kicker">YOUR PURCHASES</p><h1 className="display">Order history.</h1><p className="order-intro">A place for the art you bring home.</p><div className="profile-lens order-empty"><div className="profile-lens-edge" aria-hidden="true"/><div className="profile-lens-content"><span className="order-symbol" aria-hidden="true">↗</span><p className="kicker">NOT CONNECTED YET</p><h2 className="display">Your collection starts here.</h2><p>Purchasing is not available on Elusive Hue yet. This is an empty preview of your order history, not a record of past purchases.</p><p>There are no orders, payments or tracking details to show in this preview.</p><Link className="profile-save" to="/">Explore the art <span>↗</span></Link></div></div><Link className="order-account-link" to="/account">← Back to your account</Link></section><footer className="profile-credit"><a href="https://github.com/himanshuurawat" target="_blank" rel="noopener noreferrer">Developed by Himanshu Rawat ↗</a><div><a href="/privacy.html">Privacy policy</a><a href="/terms.html">Terms of use</a></div></footer></main>;
+}
