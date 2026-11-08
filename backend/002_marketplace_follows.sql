@@ -25,7 +25,7 @@ create policy follows_delete_own on public.follows for delete to authenticated u
 -- published (shared) artwork. Unsharing everything re-privatizes it.
 grant select on public.profiles to anon;
 create policy profiles_read_public on public.profiles for select to anon, authenticated
-  using (exists (select 1 from public.artworks a where a.owner_id = id and a.status = 'published'));
+  using (exists (select 1 from public.artworks a where a.owner_id = profiles.id and a.status = 'published'));
 
 -- Counts are public; who follows whom is not (follows rows stay own-only).
 create function public.follower_count(p_artist uuid) returns bigint language sql stable security definer set search_path = '' as $$
