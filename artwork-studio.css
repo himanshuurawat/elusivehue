@@ -52,3 +52,5 @@
 @media(prefers-reduced-motion:reduce){.saved-artwork{animation:none}.saved-artwork-photo{transition:none}.selling-panel,.offer-row{animation:none}}
 
 .orders-lists{max-width:640px;display:grid;gap:40px;margin-top:40px}
+.orders-lists a{color:#d0d5ab;text-decoration:underline;text-underline-offset:3px}
+.orders-lists a:focus-visible{outline:2px solid #d0d5ab;outline-offset:4px}
