@@ -70,6 +70,7 @@ export function MyOrders() {
       <p className="workspace-intro">Requests you sent, and requests for your art, in one place. Payments are not connected yet, so nothing is charged.</p>
       {session === false ? <div className="workspace-empty"><p>{client ? 'Sign in to see your order requests.' : 'Orders need the connected account setup.'}</p><Link to="/account">Go to sign in ↗</Link></div> : <>
         {error && <p role="alert">{error}</p>}
+        <div className="orders-lists">
         <section className="selling-offers" aria-label="Requests you sent">
           <p className="selling-kicker">Requests you sent</p>
           {sent === null ? <p role="status">Loading requests...</p> : sent.length === 0 ? <p>You have not sent any order requests yet.</p> : <ul>{sent.map(({req, work}) => <li className="offer-row" key={req.id}>
@@ -86,6 +87,7 @@ export function MyOrders() {
             <p className="offer-time">{new Date(req.created_at).toLocaleDateString('en-IN')}{req.status === 'pending' ? <> · <Link to="/my-artworks">Answer in My artworks ↗</Link></> : null}</p>
           </li>)}</ul>}
         </section>
+        </div>
       </>}
     </section>
     <footer className="workspace-footer"><a href="https://github.com/himanshuurawat" target="_blank" rel="noopener noreferrer">Developed by Himanshu Rawat ↗</a></footer>
