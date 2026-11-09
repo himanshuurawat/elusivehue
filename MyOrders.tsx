@@ -84,7 +84,7 @@ export function MyOrders() {
           {received === null ? <p role="status">Loading requests...</p> : received.length === 0 ? <p>No one has sent a request for your artworks yet.</p> : <ul>{received.map(({req, title}) => <li className="offer-row" key={req.id}>
             <div className="offer-row-top"><strong>{title}</strong><span className={`offer-status offer-status-${req.status}`}>{label(req.status)}</span></div>
             <p className="offer-note">{rupees(req.amount_inr)} · {req.first_name}{req.area ? ` · area ${req.area}` : ''}{req.status === 'confirmed' ? '. Contact details are on the artwork.' : '. Full contact details appear after you confirm.'}</p>
-            <p className="offer-time">{new Date(req.created_at).toLocaleDateString('en-IN')}{req.status === 'pending' ? <> · <Link to="/my-artworks">Answer in My artworks ↗</Link></> : null}</p>
+            <p className="offer-time">{new Date(req.created_at).toLocaleDateString('en-IN')}{req.status === 'pending' ? <> · <Link to="/my-artworks">Answer in My artworks ↗</Link></> : req.status === 'confirmed' ? <> · <Link to="/my-artworks">Open in My artworks ↗</Link></> : null}</p>
           </li>)}</ul>}
         </section>
         </div>
