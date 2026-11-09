@@ -8,14 +8,16 @@ import {
   sharedPhotoUrl,
   type ArtworkBundle,
 } from './public-service';
+import {myOfferForArtwork, type Offer} from './offers-service';
+import {myOrderForArtwork, sendOrderRequest, withdrawOrderRequest, type MyOrderRequest} from './orders-service';
 import {PublicFooter, PublicHeader, PublicLoading, rise} from './PublicPages';
 import './public-pages.css';
 
 /*
- * Direct checkout for one listed artwork. Payments are deliberately not
- * connected: confirming ends at an honest "nothing was charged" state,
- * same idiom as the order-history preview. No order, reservation or
- * payment is created anywhere.
+ * Order request for one listed artwork. The buyer sends their details and
+ * the artist confirms or declines. Payments are not connected: nothing is
+ * charged and the listing is not reserved. An accepted offer is requested
+ * at its agreed price; otherwise the asking price applies.
  */
 export function CheckoutPage() {
   const {slug = ''} = useParams<{slug: string}>();
@@ -25,11 +27,18 @@ export function CheckoutPage() {
     photo: '',
     checked: !client,
   });
-  const [placed, setPlaced] = useState(false);
+  const [order, setOrder] = useState<MyOrderRequest | null>(null);
+  const [offer, setOffer] = useState<Offer | null>(null);
+  const [form, setForm] = useState({name: '', phone: '', address: '', pin: '', email: ''});
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [needsSignIn, setNeedsSignIn] = useState(false);
 
   useEffect(() => {
     setState({bundle: null, photo: '', checked: !client});
-    setPlaced(false);
+    setOrder(null);
+    setOffer(null);
+    setError('');
     window.scrollTo(0, 0);
     if (!client) return;
     let live = true;
@@ -41,6 +50,18 @@ export function CheckoutPage() {
             photo = await sharedPhotoUrl(client, bundle.work.image_path);
           } catch {
             photo = '';
+          }
+        }
+        if (bundle) {
+          try {
+            const [o, off] = await Promise.all([myOrderForArtwork(client, bundle.work.id), myOfferForArtwork(client, bundle.work.id)]);
+            if (live) {
+              setOrder(o);
+              setOffer(off && off.status === 'accepted' ? off : null);
+              setNeedsSignIn(false);
+            }
+          } catch {
+            if (live) setNeedsSignIn(true);
           }
         }
         if (live) setState({bundle, photo, checked: true});
@@ -78,20 +99,62 @@ export function CheckoutPage() {
 
   const {work, artist} = bundle;
   const name = artist.display_name || (artist.username ? '@' + artist.username : 'Artist');
-  const money = '₹' + work.asking_price_inr.toLocaleString('en-IN');
+  const price = offer ? offer.amount_inr : work.asking_price_inr;
+  const money = '₹' + price.toLocaleString('en-IN');
+  const physical = work.format === 'Physical';
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm({...form, [k]: e.target.value});
+  const send = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      setOrder(await sendOrderRequest(client, work.id, {...form, pin: form.pin.trim()}, offer));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send the request. Retry when connected.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  const withdraw = async () => {
+    if (!order || busy) return;
+    setBusy(true);
+    setError('');
+    try {
+      await withdrawOrderRequest(client, order.id);
+      setOrder({...order, status: 'withdrawn'});
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not withdraw. Retry when connected.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  const active = order && (order.status === 'pending' || order.status === 'confirmed' || order.status === 'declined') ? order : null;
 
   return (
     <div className="pub-space">
       <PublicHeader />
       <main className="pub-checkout">
-        {placed ? (
-          <section className="pub-checkout-done pub-rise" style={rise('0.04s')} aria-label="Preview complete">
-            <p className="pub-kicker">Preview complete</p>
-            <h1 className="pub-title">Nothing was charged.</h1>
+        {active ? (
+          <section className="pub-checkout-done pub-rise" style={rise('0.04s')} aria-label="Order request">
+            <p className="pub-kicker">Order request</p>
+            <h1 className="pub-title">
+              {active.status === 'pending' ? 'Request sent.' : active.status === 'confirmed' ? 'The artist confirmed.' : 'Not this time.'}
+            </h1>
             <p className="pub-story">
-              When payments arrive, this step collects them. For now no order, reservation or payment exists, and the
-              listing stays exactly as it was.
+              {active.status === 'pending'
+                ? `${name} will confirm or decline your request for ${work.title} at ₹${active.amount_inr.toLocaleString('en-IN')}. They see your first name and area now, and your full contact details only after they confirm.`
+                : active.status === 'confirmed'
+                  ? `${name} now has your contact details for ${work.title} at ₹${active.amount_inr.toLocaleString('en-IN')}. They will reach out about the next step. Payments are not connected yet, so nothing was charged.`
+                  : `${name} could not take this request. Nothing was charged.`}
             </p>
+            {active.status === 'pending' ? (
+              <button type="button" className="pub-offer-ghost" disabled={busy} onClick={() => void withdraw()}>
+                Withdraw request
+              </button>
+            ) : null}
+            {error ? <p className="pub-offer-error" role="alert">{error}</p> : null}
             <Link className="pub-buy" to={`/artwork/${artworkParam(work)}`}>
               Back to the artwork ↗
             </Link>
@@ -99,17 +162,16 @@ export function CheckoutPage() {
         ) : (
           <>
             <p className="pub-kicker pub-rise" style={rise('0.06s')}>
-              Checkout / {work.format}
+              Order request / {work.format}
             </p>
             <h1 className="pub-title pub-rise" style={rise('0.12s')}>
-              Almost home.
+              Ask for this piece.
             </h1>
             <p className="pub-note pub-rise" style={rise('0.18s')}>
-              One artwork, straight to payment. No cart to manage.
+              One artwork, one request. The artist confirms before anything else happens.
             </p>
             <p className="pub-note pub-rise pub-checkout-notice" style={rise('0.24s')}>
-              Checkout preview. Payments are not connected yet: confirming charges nothing, reserves nothing and creates
-              no order.
+              Payments are not connected yet. Sending this request charges nothing and does not reserve the piece.
             </p>
             <div className="pub-checkout-body">
               <section className="pub-checkout-summary pub-rise" style={rise('0.3s')} aria-label="Artwork summary">
@@ -132,19 +194,56 @@ export function CheckoutPage() {
                     <span>01</span>Your details
                   </li>
                   <li>
-                    <span>02</span>Payment
+                    <span>02</span>The artist confirms
                   </li>
                   <li>
-                    <span>03</span>The piece is yours
+                    <span>03</span>You agree the next step
                   </li>
                 </ol>
                 <p className="pub-checkout-price">
-                  <span>Artwork price</span>
+                  <span>{offer ? 'Agreed price' : 'Asking price'}</span>
                   <strong>{money}</strong>
                 </p>
-                <button type="button" className="pub-buy" onClick={() => setPlaced(true)}>
-                  Confirm order · preview ↗
-                </button>
+                {needsSignIn ? (
+                  <p className="pub-note">
+                    <Link className="pub-inline-link" to="/account">Sign in</Link> to send an order request.
+                  </p>
+                ) : (
+                  <form className="pub-offer-form" onSubmit={(e) => void send(e)}>
+                    <label>
+                      Your name
+                      <input value={form.name} onChange={set('name')} maxLength={80} required autoComplete="name" disabled={busy} />
+                    </label>
+                    {physical ? (
+                      <>
+                        <label>
+                          Phone
+                          <input value={form.phone} onChange={set('phone')} maxLength={20} required type="tel" autoComplete="tel" disabled={busy} />
+                        </label>
+                        <label>
+                          Delivery address
+                          <textarea value={form.address} onChange={set('address')} maxLength={300} rows={3} required autoComplete="street-address" disabled={busy} />
+                        </label>
+                        <label>
+                          PIN code
+                          <input value={form.pin} onChange={set('pin')} inputMode="numeric" maxLength={6} pattern="[0-9]{6}" required autoComplete="postal-code" disabled={busy} />
+                        </label>
+                      </>
+                    ) : (
+                      <label>
+                        Email for the file
+                        <input value={form.email} onChange={set('email')} maxLength={120} required type="email" autoComplete="email" disabled={busy} />
+                      </label>
+                    )}
+                    <p className="pub-offer-hint">
+                      {physical ? 'The artist sees your first name and area. Phone and address are shared only after they confirm.' : 'The artist sees your first name. Your email is shared only after they confirm.'}
+                    </p>
+                    {error ? <p className="pub-offer-error" role="alert">{error}</p> : null}
+                    <button type="submit" disabled={busy}>
+                      {busy ? 'Sending...' : `Send order request at ${money} ↗`}
+                    </button>
+                  </form>
+                )}
                 <p className="pub-note">
                   Prefer another price? <Link className="pub-inline-link" to={`/artwork/${artworkParam(work)}`}>Make an offer</Link> on the artwork.
                 </p>

@@ -4,6 +4,7 @@ import {configuredAccountClient,accountRepository,type Artwork} from './account-
 import {artworkParam} from './public-service';
 import {prepareArtworkPhoto,saveArtworkDraft,newDraftAttempt,discardUnconfirmedPhoto,ownArtworkPreviews,type DraftDetails} from './artwork-drafts';
 import {offersForArtworks,respondOffer,type Offer} from './offers-service';
+import {artistOrderRequests,respondOrderRequest,type ArtistOrderRequest} from './orders-service';
 import './artwork-studio.css';
 
 export function ArtworkStudio({onClose,onSaved}:{onClose:()=>void;onSaved:(artwork:Artwork)=>void}){
@@ -57,9 +58,24 @@ function OfferRow({client,offer,onChanged}:{client:NonNullable<ReturnType<typeof
  </li>;
 }
 
+function OrderRequestRow({client,req,onChanged}:{client:NonNullable<ReturnType<typeof configuredAccountClient>>;req:ArtistOrderRequest;onChanged:()=>void}){
+ const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ const answer=async(action:'confirm'|'decline')=>{if(busy)return;setBusy(true);setMessage('');try{await respondOrderRequest(client,req.id,action);onChanged();}catch(e){setMessage(e instanceof Error?e.message:'Could not answer this request. Retry when connected.');}finally{setBusy(false);}};
+ const confirmed=req.status==='confirmed';
+ return <li className="offer-row">
+  <div className="offer-row-top"><strong>₹{req.amount_inr.toLocaleString('en-IN')}</strong><span className={`offer-status offer-status-${req.status}`}>{req.status[0].toUpperCase()+req.status.slice(1)}</span></div>
+  {confirmed?<p className="offer-note">{req.buyer_name}{req.buyer_phone?` · ${req.buyer_phone}`:''}{req.buyer_email?` · ${req.buyer_email}`:''}{req.delivery_address?<><br/>{req.delivery_address}{req.delivery_pin?` · ${req.delivery_pin}`:''}</>:null}</p>:<p className="offer-note">{req.first_name}{req.area?` · area ${req.area}`:''}. Full contact details appear after you confirm.</p>}
+  <p className="offer-time">{new Date(req.created_at).toLocaleDateString('en-IN')}</p>
+  {req.status==='pending'&&<div className="offer-respond"><div className="offer-respond-actions"><button type="button" disabled={busy} onClick={()=>void answer('confirm')}>Confirm</button><button type="button" disabled={busy} onClick={()=>void answer('decline')}>Decline</button></div></div>}
+  {message&&<p role="alert">{message}</p>}
+ </li>;
+}
+
 function SellingPanel({client,artwork,onChanged}:{client:NonNullable<ReturnType<typeof configuredAccountClient>>;artwork:Artwork;onChanged:()=>void}){
  const [descr,setDescr]=useState(artwork.description),[forSale,setForSale]=useState(artwork.for_sale),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[savedTick,setSavedTick]=useState(false);
- const [offers,setOffers]=useState<Offer[]|null>(null);
+ const [offers,setOffers]=useState<Offer[]|null>(null),[orders,setOrders]=useState<ArtistOrderRequest[]|null>(null);
+ const loadOrders=async()=>{try{setOrders(await artistOrderRequests(client,[artwork.id]));}catch{setOrders([]);}};
+ useEffect(()=>{if(artwork.status==='published')void loadOrders();},[client,artwork.id,artwork.status,artwork.updated_at]);
  const dirty=descr!==artwork.description||forSale!==artwork.for_sale;
  const loadOffers=async()=>{try{setOffers(await offersForArtworks(client,[artwork.id]));}catch{setOffers([]);}};
  useEffect(()=>{if(artwork.status==='published')void loadOffers();},[client,artwork.id,artwork.status,artwork.updated_at]);
@@ -71,7 +87,7 @@ function SellingPanel({client,artwork,onChanged}:{client:NonNullable<ReturnType<
   {dirty&&<button type="button" className="selling-save" disabled={busy} onClick={()=>void save()}>{busy?'Saving...':'Save selling details ↗'}</button>}
   {savedTick&&!dirty&&<p role="status">Selling details saved.</p>}
   {message&&<p role="alert">{message}</p>}
-  {artwork.status==='published'&&<div className="selling-offers"><p className="selling-kicker">Offers on this artwork</p>{offers===null?<p role="status">Loading offers...</p>:offers.length===0?<p>No offers yet. Offers buyers make will appear here.</p>:<ul>{offers.map(o=><OfferRow key={o.id} client={client} offer={o} onChanged={()=>{void loadOffers();}}/>)}</ul>}</div>}
+  {artwork.status==='published'&&<div className="selling-offers"><p className="selling-kicker">Order requests</p>{orders===null?<p role="status">Loading requests...</p>:orders.length===0?<p>No order requests yet. Requests from buyers appear here for you to confirm or decline.</p>:<ul>{orders.map(r=><OrderRequestRow key={r.id} client={client} req={r} onChanged={()=>{void loadOrders();}}/>)}</ul>}</div>}{artwork.status==='published'&&<div className="selling-offers"><p className="selling-kicker">Offers on this artwork</p>{offers===null?<p role="status">Loading offers...</p>:offers.length===0?<p>No offers yet. Offers buyers make will appear here.</p>:<ul>{offers.map(o=><OfferRow key={o.id} client={client} offer={o} onChanged={()=>{void loadOffers();}}/>)}</ul>}</div>}
  </section>;
 }
 
