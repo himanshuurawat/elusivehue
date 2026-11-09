@@ -776,9 +776,6 @@ a.pub-buy{color:#171b19}
 .pub-work-card .pub-work-thumb{transition:transform .35s ease}
 @media(hover:hover){.pub-work-card:hover .pub-work-thumb{transform:perspective(900px) rotateX(2deg) rotateY(-2.5deg) translateY(-3px)}}
 @media(prefers-reduced-motion:reduce){.pub-work-card .pub-work-thumb{transition:none}}
-<<<<<<< feature/artwork-order-requests
 .pub-offer-ghost{min-height:44px;padding:10px 18px;border-radius:25px;border:1px solid #ffffff40;background:transparent;color:#ece8df;font:11px var(--text);cursor:pointer;margin-top:18px}
 .pub-offer-ghost:disabled{opacity:.4}
 .pub-offer-hint{font:11px/1.6 var(--text);color:#b9ad97;margin:0}
-=======
->>>>>>> auth-preview
