@@ -728,6 +728,7 @@
 
 /* Listed artwork: buy + make an offer (real, persisted offers; payments not connected) */
 .pub-buy{display:inline-block;min-height:44px;padding:12px 22px;border-radius:25px;background:#e9e2d5;color:#171b19;border:1px solid #e9e2d5;font:12px var(--text);text-decoration:none;cursor:pointer;transition:opacity .25s ease}
+a.pub-buy{color:#171b19}
 .pub-buy:hover{opacity:.88}
 .pub-inline-link{color:inherit;text-decoration:underline;text-underline-offset:3px}
 .pub-offer{border-top:1px solid #ffffff20;padding-top:18px;display:grid;gap:14px}
@@ -763,3 +764,15 @@
 .pub-checkout-done{max-width:640px}
 .pub-checkout-done .pub-buy{margin-top:24px}
 @media(max-width:650px){.pub-checkout-body{grid-template-columns:1fr;gap:28px}}
+
+/* Liquid glass, same approved idiom as profile-glass.css: translucent tint,
+   backdrop blur, specular top edge. No refraction claim. */
+.pub-offer{background:linear-gradient(150deg,#ffffff10,#ffffff04 55%,#ffffff08);backdrop-filter:blur(16px) saturate(1.25);-webkit-backdrop-filter:blur(16px) saturate(1.25);border:1px solid #ffffff14;border-radius:18px;padding:16px 18px;box-shadow:inset 0 1px 0 #ffffff22,inset 0 0 1px 1px #ffffff08,0 18px 44px #00000026}
+.pub-buy{background:linear-gradient(150deg,#f4efe2eb,#e9e2d5d9);backdrop-filter:blur(12px) saturate(1.2);-webkit-backdrop-filter:blur(12px) saturate(1.2);box-shadow:inset 0 1px 0 #ffffffcc,0 10px 26px #00000038}
+@supports not (backdrop-filter:blur(1px)){.pub-offer{background:#141414f2}}
+
+/* Subtle 3D depth on artwork cards: hover tilt on pointer devices only.
+   Touch scrolling unaffected; transform only. */
+.pub-work-card .pub-work-thumb{transition:transform .35s ease}
+@media(hover:hover){.pub-work-card:hover .pub-work-thumb{transform:perspective(900px) rotateX(2deg) rotateY(-2.5deg) translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){.pub-work-card .pub-work-thumb{transition:none}}
