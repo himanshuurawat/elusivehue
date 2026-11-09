@@ -21,6 +21,8 @@ export type SharedArtwork = {
   height: number;
   unit: string;
   asking_price_inr: number;
+  description: string;
+  for_sale: boolean;
   image_path: string;
   created_at: string;
 };
