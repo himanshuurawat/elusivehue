@@ -27,7 +27,11 @@
 .offer-row-top{display:flex;justify-content:space-between;align-items:baseline;gap:14px}
 .offer-row-top strong{font-weight:400;font-size:15px}
 .offer-status{font:9px var(--text);letter-spacing:.08em;text-transform:uppercase;color:#b9ad97}
+<<<<<<< auth-preview
 .offer-status-accepted,.offer-status-confirmed{color:#a9c9a4}.offer-status-declined,.offer-status-withdrawn{color:#e5b3a5}.offer-status-countered{color:#d5c5a7}
+=======
+.offer-status-accepted{color:#a9c9a4}.offer-status-declined,.offer-status-withdrawn{color:#e5b3a5}.offer-status-countered{color:#d5c5a7}
+>>>>>>> main
 .offer-note{font:12px/1.6 var(--text);color:#e2ddd2;margin:6px 0 0;overflow-wrap:anywhere}
 .offer-time{font:10px var(--text);color:#8f8c84;margin:6px 0 0}
 .offer-respond{display:grid;gap:10px;margin-top:12px}
