@@ -566,10 +566,7 @@ function BuyOffer({client, work}: {client: SupabaseClient; work: SharedArtwork})
     offerArea = <div className="pub-offer-state">
       <p><strong>Agreed at {money(offer.amount_inr)}.</strong></p>
       <p className="pub-note">Payments are not connected yet, so nothing is charged or reserved. The artist can see this agreement.</p>
-<<<<<<< auth-preview
       <Link className="pub-buy" to={`/buy/${artworkParam(work)}`}>Send order request at {money(offer.amount_inr)} ↗</Link>
-=======
->>>>>>> main
     </div>;
   }
 
