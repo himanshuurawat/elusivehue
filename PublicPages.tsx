@@ -16,6 +16,13 @@ import {
   type ArtistBundle,
   type SharedArtwork,
 } from './public-service';
+import {
+  makeOffer,
+  myOfferForArtwork,
+  buyerOfferAction,
+  signedInUserId,
+  type Offer,
+} from './offers-service';
 import './public-pages.css';
 
 /*
@@ -160,7 +167,7 @@ const publicWorks: PublicWork[] = [
   },
 ];
 
-function initials(name: string): string {
+export function initials(name: string): string {
   return name
     .split(' ')
     .map((part) => part[0])
@@ -169,7 +176,7 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-function rise(delay: string): React.CSSProperties {
+export function rise(delay: string): React.CSSProperties {
   return {'--d': delay} as React.CSSProperties;
 }
 
@@ -392,7 +399,7 @@ function RealFollow({
   );
 }
 
-function PublicHeader() {
+export function PublicHeader() {
   return (
     <header className="pub-top">
       <LiquidGlassFilter />
@@ -406,18 +413,18 @@ function PublicHeader() {
   );
 }
 
-function PublicFooter({demo}: {demo?: boolean}) {
+export function PublicFooter({demo}: {demo?: boolean}) {
   return (
     <footer className="pub-foot pub-rise" style={rise('0.68s')}>
       {demo
         ? 'Demo preview only. Artwork, artist, price and followers are dummy content. Nothing is for sale.'
-        : 'Shared by the artist. Follows are saved to accounts. Buying is not live yet.'}
+        : 'Shared by the artist. Follows and offers are saved to accounts. Payments are not connected yet.'}
     </footer>
   );
 }
 
 /* Loading shell while a real lookup is in flight. */
-function PublicLoading({label}: {label: string}) {
+export function PublicLoading({label}: {label: string}) {
   return (
     <div className="pub-space">
       <PublicHeader />
@@ -467,6 +474,105 @@ export function ArtworkPage() {
   return <DemoArtwork slug={slug} />;
 }
 
+
+/* Buyer side of a listed artwork: direct checkout entry + a real,
+ * persisted make-an-offer conversation. An offer asks the artist for a
+ * different price; it is not a purchase and never charges anything. */
+function BuyOffer({client, work}: {client: SupabaseClient; work: SharedArtwork}) {
+  const [me, setMe] = useState<string | null | undefined>(undefined);
+  const [offer, setOffer] = useState<Offer | null>(null);
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let live = true;
+    signedInUserId(client)
+      .then(async (id) => {
+        if (!live) return;
+        setMe(id);
+        if (id) {
+          try {
+            const current = await myOfferForArtwork(client, work.id);
+            if (live) setOffer(current);
+          } catch { /* the offer area still works; status just stays unknown */ }
+        }
+      })
+      .catch(() => { if (live) setMe(null); });
+    return () => { live = false; };
+  }, [client, work.id]);
+
+  const money = (v: number) => '₹' + v.toLocaleString('en-IN');
+  const run = (fn: () => Promise<Offer>) => {
+    if (busy) return;
+    setBusy(true);
+    setError('');
+    fn()
+      .then((next) => { setOffer(next); setAmount(''); setNote(''); })
+      .catch((e) => setError(e instanceof Error ? e.message : 'Could not update the offer. Retry when connected.'))
+      .finally(() => setBusy(false));
+  };
+  const valid = (v: string) => /^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= 10000000;
+  const submit = () => {
+    if (!valid(amount)) { setError('Enter a whole-rupee amount between ₹1 and ₹1,00,00,000.'); return; }
+    run(() => makeOffer(client, work.id, Number(amount), note));
+  };
+
+  const openForm = (
+    <form className="pub-offer-form" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+      <label>Your offer · INR<input inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} maxLength={8} placeholder="Your price in rupees" disabled={busy} /></label>
+      <label>Note to the artist · optional<textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} rows={2} placeholder="Add a short note" disabled={busy} /></label>
+      <button type="submit" disabled={busy}>{busy ? 'Sending...' : 'Send offer ↗'}</button>
+    </form>
+  );
+
+  let offerArea: React.ReactNode;
+  if (me === undefined) {
+    offerArea = <p className="pub-note">Checking your account...</p>;
+  } else if (me === null) {
+    offerArea = <p className="pub-note"><Link to="/account" className="pub-inline-link">Sign in</Link> to make an offer. An offer asks the artist for a different price; it is not a purchase.</p>;
+  } else if (me === work.owner_id) {
+    offerArea = <p className="pub-note">This is your artwork. Offers from buyers appear in My artworks.</p>;
+  } else if (!offer || offer.status === 'withdrawn') {
+    offerArea = openForm;
+  } else if (offer.status === 'declined') {
+    offerArea = <>
+      <p className="pub-note">The artist declined your offer of {money(offer.amount_inr)}. You can send a new one.</p>
+      {openForm}
+    </>;
+  } else if (offer.status === 'pending') {
+    offerArea = <div className="pub-offer-state">
+      <p><strong>{money(offer.amount_inr)}</strong> offered · waiting for the artist.</p>
+      <button type="button" disabled={busy} onClick={() => run(() => buyerOfferAction(client, offer.id, 'withdraw'))}>Withdraw offer</button>
+    </div>;
+  } else if (offer.status === 'countered') {
+    offerArea = <div className="pub-offer-state">
+      <p>You offered {money(offer.amount_inr)} · the artist countered at <strong>{money(offer.counter_amount_inr ?? 0)}</strong>.</p>
+      <div className="pub-offer-actions">
+        <button type="button" disabled={busy} onClick={() => run(() => buyerOfferAction(client, offer.id, 'accept_counter'))}>Accept {money(offer.counter_amount_inr ?? 0)} ↗</button>
+        <button type="button" disabled={busy} onClick={() => run(() => buyerOfferAction(client, offer.id, 'withdraw'))}>Withdraw</button>
+      </div>
+      <p className="pub-note">Or send a different price below.</p>
+      {openForm}
+    </div>;
+  } else {
+    offerArea = <div className="pub-offer-state">
+      <p><strong>Agreed at {money(offer.amount_inr)}.</strong></p>
+      <p className="pub-note">Payments are not connected yet, so nothing is charged or reserved. The artist can see this agreement.</p>
+    </div>;
+  }
+
+  return <section className="pub-offer pub-rise" style={rise('0.4s')} aria-label="Buy or make an offer">
+    <div className="pub-offer-top">
+      <Link className="pub-buy" to={`/buy/${artworkParam(work)}`}>Buy at {money(work.asking_price_inr)} ↗</Link>
+      <span className="pub-offer-hint">or make an offer</span>
+    </div>
+    {offerArea}
+    {error && <p className="pub-offer-error" role="alert">{error}</p>}
+  </section>;
+}
+
 /* Real shared artwork: data from the connected project, photo via a
  * signed URL of the same stored file (no duplicate copy). */
 function RealArtwork({bundle, photo, client}: {bundle: ArtworkBundle; photo: string; client: SupabaseClient}) {
@@ -513,9 +619,18 @@ function RealArtwork({bundle, photo, client}: {bundle: ArtworkBundle; photo: str
             ₹{work.asking_price_inr.toLocaleString('en-IN')}
             <span className="pub-price-note">asking price</span>
           </p>
-          <p className="pub-note pub-rise" style={rise('0.44s')}>
-            Buying is not live yet. This is the artwork {name.split(' ')[0]} chose to share.
-          </p>
+          {work.description ? (
+            <p className="pub-story pub-rise" style={rise('0.38s')}>
+              {work.description}
+            </p>
+          ) : null}
+          {work.for_sale ? (
+            <BuyOffer client={client} work={work} />
+          ) : (
+            <p className="pub-note pub-rise" style={rise('0.44s')}>
+              Not offered for sale. This is the artwork {name.split(' ')[0]} chose to share.
+            </p>
+          )}
           <Link to={`/artist/${artistParam(artist)}`} className="pub-artist-card pub-rise" style={rise('0.5s')}>
             <span className="pub-card-refract" aria-hidden="true" />
             <span className="pub-avatar" aria-hidden="true">
