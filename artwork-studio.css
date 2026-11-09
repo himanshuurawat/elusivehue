@@ -6,3 +6,33 @@
 .share-public-actions button{appearance:none;border:1px solid #d0d5ab;background:transparent;color:#d0d5ab;border-radius:999px;padding:8px 16px;font:inherit;font-size:13px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
 .share-public-actions button:disabled{opacity:.5;cursor:default}
 .share-public-actions a{color:#d0d5ab;font-size:13px;text-decoration:none}
+
+/* Selling panel + offers inbox (My artworks) */
+.selling-panel{margin-top:18px;border-top:1px solid #ffffff1c;padding-top:18px;display:grid;gap:14px;animation:selling-rise .45s ease both}
+@keyframes selling-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.selling-kicker{font:9px var(--text);letter-spacing:.1em;text-transform:uppercase;color:#bfb7a8;margin:0}
+.selling-descr{display:grid;gap:8px;font:11px var(--text);color:#c5c1b8}
+.selling-descr textarea{border:1px solid #ffffff30;background:#ffffff05;color:#f1ece2;border-radius:6px;padding:12px;font:13px/1.5 var(--text);width:100%;box-sizing:border-box;resize:vertical;min-height:44px}
+.selling-descr textarea:focus{outline:1px solid #d5c5a7;outline-offset:3px}
+.selling-row{display:flex;align-items:center;gap:14px}
+.selling-row p{font:11px/1.6 var(--text);color:#bcb8ad;margin:0}
+.selling-toggle{min-height:40px;padding:8px 16px;border-radius:22px;border:1px solid #ffffff40;background:transparent;color:#ece8df;font:11px var(--text);cursor:pointer;flex-shrink:0;transition:background .25s ease,color .25s ease}
+.selling-toggle.on{background:#e9e2d5;color:#171b19;border-color:#e9e2d5}
+.selling-save{min-height:44px;padding:10px 18px;border-radius:25px;border:1px solid #e9e2d5;background:#e9e2d5;color:#171b19;font:11px var(--text);cursor:pointer;justify-self:start}
+.selling-save:disabled,.selling-toggle:disabled{opacity:.4}
+.selling-offers{display:grid;gap:10px}
+.selling-offers> p{font:11px/1.6 var(--text);color:#bcb8ad;margin:0}
+.selling-offers ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.offer-row{border-left:1px solid #b9a98a;padding:6px 14px;animation:selling-rise .45s ease both}
+.offer-row-top{display:flex;justify-content:space-between;align-items:baseline;gap:14px}
+.offer-row-top strong{font-weight:400;font-size:15px}
+.offer-status{font:9px var(--text);letter-spacing:.08em;text-transform:uppercase;color:#b9ad97}
+.offer-status-accepted{color:#a9c9a4}.offer-status-declined,.offer-status-withdrawn{color:#e5b3a5}.offer-status-countered{color:#d5c5a7}
+.offer-note{font:12px/1.6 var(--text);color:#e2ddd2;margin:6px 0 0;overflow-wrap:anywhere}
+.offer-time{font:10px var(--text);color:#8f8c84;margin:6px 0 0}
+.offer-respond{display:grid;gap:10px;margin-top:12px}
+.offer-respond-actions{display:flex;gap:10px;flex-wrap:wrap}
+.offer-respond button,.offer-counter-row button{min-height:40px;padding:8px 14px;border-radius:20px;border:1px solid #ffffff40;background:transparent;color:#ece8df;font:11px var(--text);cursor:pointer}
+.offer-respond button:disabled{opacity:.4}
+.offer-counter-row{display:flex;gap:10px}
+.offer-counter-row input{flex:1;min-width:0;min-height:40px;border:1px solid #ffffff30;background:#ffffff05;color:#f1ece2;border-radius:6px;padding:8px 12px;font:13px var(--text)}
