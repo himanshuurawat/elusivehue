@@ -49,4 +49,4 @@
 @keyframes saved-card-in{from{opacity:0;transform:perspective(900px) rotateX(6deg) translateY(14px)}to{opacity:1;transform:none}}
 .saved-artwork-photo{transition:transform .35s ease,box-shadow .35s ease}
 @media(hover:hover){.saved-artwork summary:hover .saved-artwork-photo{transform:perspective(900px) rotateX(2.5deg) rotateY(-3deg) translateY(-3px);box-shadow:0 18px 40px #00000040}}
-@media(prefers-reduced-motion:reduce){.saved-artwork{animation:none}.saved-artwork-photo{transition:none}}
+@media(prefers-reduced-motion:reduce){.saved-artwork{animation:none}.saved-artwork-photo{transition:none}.selling-panel,.offer-row{animation:none}}
