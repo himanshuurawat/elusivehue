@@ -4,6 +4,7 @@ const OrderHistory=React.lazy(()=>import('./OrderHistory').then(m=>({default:m.O
 const MyArtworks=React.lazy(()=>import('./ArtworkStudio').then(m=>({default:m.MyArtworks})));
 const AccountPage=React.lazy(()=>import('./AccountPage').then(m=>({default:m.AccountPage})));
 const ArtworkPage=React.lazy(()=>import('./PublicPages').then(m=>({default:m.ArtworkPage})));
+const CheckoutPage=React.lazy(()=>import('./CheckoutPage').then(m=>({default:m.CheckoutPage})));
 const ArtistPage=React.lazy(()=>import('./PublicPages').then(m=>({default:m.ArtistPage})));
 import {slugFor} from './publicSlug';
 import {heroWide,artEmber,artGlitch,artFigure,artVessel,artContour,artCollage,resaleCamera,resaleBrushes,resaleJacket} from './artwork';
@@ -119,6 +120,7 @@ function ArtistListing({onClose}: {onClose:()=>void}) {
     const [width,setWidth]=useState('');
     const [height,setHeight]=useState('');
     const [price,setPrice]=useState('');
+    const [descr,setDescr]=useState('');
     const [error,setError]=useState('');
     const [preview,setPreview]=useState(false);
     React.useEffect(()=>{const el=dialog.current,previous=document.activeElement as HTMLElement|null;el?.showModal();return()=>{el?.close();previous?.focus();};},[]);
@@ -147,9 +149,9 @@ function ArtistListing({onClose}: {onClose:()=>void}) {
         <div className="listing-top"><span className="kicker">Elusive Hue / Artist studio</span><button type="button" onClick={onClose} aria-label="Close listing demo">Close ×</button></div>
         <header className="listing-heading"><p className="kicker">{preview?'02 / Buyer-facing preview':'01 / Your artwork'}</p><h2 className="display">{preview?'See it through their eyes.':'Make room for your work.'}</h2><p>{preview?'This is how your artwork could appear to a buyer.':'A photo, a few details, your price. Then see your listing take shape.'}</p></header>
         <p className="listing-notice">Demo only. Your photo stays in this browser session. Nothing is uploaded, saved or published. Closing this studio clears the draft.</p>
-        {preview?<section className="listing-preview" aria-label="Buyer-facing listing preview"><div className="listing-image"><img src={photo} alt={title.trim()} /></div><div className="listing-preview-copy"><span className="kicker">Unpublished preview / {format} artwork</span><h3 className="display">{title.trim()}</h3><p className="listing-asking">₹{Number(price).toLocaleString('en-IN')}<span>Asking price · preview only</span></p><dl><div><dt>Art medium</dt><dd>{medium.trim()}</dd></div><div><dt>Size class</dt><dd>{size}</dd></div><div><dt>Width × height</dt><dd>{width} × {height} {units}</dd></div></dl><p className="listing-small">Details from this draft, not a verified or live listing. No buyer can see or buy this preview.</p><button type="button" className="listing-primary" onClick={()=>{setPreview(false);setError('');dialog.current?.scrollTo({top:0});}}>Edit details</button><button type="button" onClick={onClose}>Done · close demo</button></div></section>:<form className="listing-form" noValidate onSubmit={e=>{e.preventDefault();show();}}>
+        {preview?<section className="listing-preview" aria-label="Buyer-facing listing preview"><div className="listing-image"><img src={photo} alt={title.trim()} /></div><div className="listing-preview-copy"><span className="kicker">Unpublished preview / {format} artwork</span><h3 className="display">{title.trim()}</h3><p className="listing-asking">₹{Number(price).toLocaleString('en-IN')}<span>Asking price · preview only</span></p><dl><div><dt>Art medium</dt><dd>{medium.trim()}</dd></div><div><dt>Size class</dt><dd>{size}</dd></div><div><dt>Width × height</dt><dd>{width} × {height} {units}</dd></div></dl>{descr.trim()&&<p className="listing-desc">{descr.trim()}</p>}<p className="listing-small">Details from this draft, not a verified or live listing. No buyer can see or buy this preview.</p><button type="button" className="listing-primary" onClick={()=>{setPreview(false);setError('');dialog.current?.scrollTo({top:0});}}>Edit details</button><button type="button" onClick={onClose}>Done · close demo</button></div></section>:<form className="listing-form" noValidate onSubmit={e=>{e.preventDefault();show();}}>
             <div className="listing-photo-panel"><div className={`listing-image${photo?'':' empty'}`}>{photo?<img src={photo} alt="Selected artwork preview" onError={()=>{setPhoto('');setError('That image could not be opened. Try another JPG, PNG or WebP.');}}/>:<div><span aria-hidden="true">＋</span><p>Your artwork goes here.</p><small>JPG, PNG or WebP · up to 8 MB</small></div>}</div><label className="listing-file">Choose a photo<input ref={input} type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>pick(e.target.files?.[0])}/></label><button type="button" onClick={sample}>Use sample artwork + details</button>{photo&&<button type="button" onClick={()=>{setPhoto('');if(input.current)input.current.value='';}}>Remove photo</button>}</div>
-            <div className="listing-fields"><label>Artwork title<input value={title} onChange={e=>setTitle(e.target.value)} maxLength={100} placeholder="Give your piece a name"/></label><div className="listing-field-row"><label>Format<select value={format} onChange={e=>setFormat(e.target.value)}><option>Physical</option><option>Digital</option></select></label><label>Size class<select value={size} onChange={e=>setSize(e.target.value)}><option>Small</option><option>Medium</option><option>Large</option></select></label></div><label>Art medium<input value={medium} onChange={e=>setMedium(e.target.value)} maxLength={100} placeholder={format==='Physical'?'e.g. Oil on canvas':'e.g. Digital illustration'}/></label><div className="listing-field-row"><label>Width · {units}<input inputMode="decimal" value={width} onChange={e=>setWidth(e.target.value)} maxLength={9} placeholder="Width"/></label><label>Height · {units}<input inputMode="decimal" value={height} onChange={e=>setHeight(e.target.value)} maxLength={9} placeholder="Height"/></label></div><p className="listing-small">{format==='Physical'?'Artwork dimensions in centimetres, without a frame. Size class is your label, not an automatic measurement.':'Digital canvas dimensions in whole pixels, not a physical print size. Size class is your label.'}</p><label>Asking price · INR<input inputMode="numeric" value={price} onChange={e=>setPrice(e.target.value)} maxLength={8} placeholder="Your price in rupees"/></label>{error&&<p className="listing-error" role="alert">{error}</p>}<button type="submit" className="listing-primary" onClick={e=>{e.preventDefault();show();}}>Preview listing ↗</button><p className="listing-small">Preview only. There is no publish button in this demo.</p></div>
+            <div className="listing-fields"><label>Artwork title<input value={title} onChange={e=>setTitle(e.target.value)} maxLength={100} placeholder="Give your piece a name"/></label><div className="listing-field-row"><label>Format<select value={format} onChange={e=>setFormat(e.target.value)}><option>Physical</option><option>Digital</option></select></label><label>Size class<select value={size} onChange={e=>setSize(e.target.value)}><option>Small</option><option>Medium</option><option>Large</option></select></label></div><label>Art medium<input value={medium} onChange={e=>setMedium(e.target.value)} maxLength={100} placeholder={format==='Physical'?'e.g. Oil on canvas':'e.g. Digital illustration'}/></label><div className="listing-field-row"><label>Width · {units}<input inputMode="decimal" value={width} onChange={e=>setWidth(e.target.value)} maxLength={9} placeholder="Width"/></label><label>Height · {units}<input inputMode="decimal" value={height} onChange={e=>setHeight(e.target.value)} maxLength={9} placeholder="Height"/></label></div><p className="listing-small">{format==='Physical'?'Artwork dimensions in centimetres, without a frame. Size class is your label, not an automatic measurement.':'Digital canvas dimensions in whole pixels, not a physical print size. Size class is your label.'}</p><label>Asking price · INR<input inputMode="numeric" value={price} onChange={e=>setPrice(e.target.value)} maxLength={8} placeholder="Your price in rupees"/></label><label>Description · optional<textarea value={descr} onChange={e=>setDescr(e.target.value)} maxLength={500} rows={3} placeholder="A few words about the piece - its story, materials, condition. Buyers read this on the listing."/></label>{error&&<p className="listing-error" role="alert">{error}</p>}<button type="submit" className="listing-primary" onClick={e=>{e.preventDefault();show();}}>Preview listing ↗</button><p className="listing-small">Preview only. There is no publish button in this demo.</p></div>
         </form>}
     </div></dialog>;
 }
@@ -183,6 +185,37 @@ function OfferDemo({work}: {work: typeof works[number]}) {
     </section>;
 }
 
+function CheckoutDemo({work, onClose}: {work: typeof works[number] | null; onClose: () => void}) {
+    const dialog = React.useRef<HTMLDialogElement>(null);
+    const [placed, setPlaced] = useState(false);
+    React.useEffect(() => {
+        setPlaced(false);
+        if (work && !dialog.current?.open) { dialog.current?.showModal(); dialog.current?.scrollTo({top: 0}); }
+        if (!work && dialog.current?.open) dialog.current.close();
+    }, [work]);
+    return <dialog ref={dialog} className="listing-dialog checkout-dialog" aria-label="Checkout preview" onClose={e=>{e.stopPropagation();onClose();}} onCancel={e=>{e.preventDefault();e.stopPropagation();onClose();}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+        {work && <div className="listing-shell">
+            <div className="listing-top"><span className="kicker">Elusive Hue / Checkout preview</span><button type="button" onClick={onClose} aria-label="Close checkout preview">Close ×</button></div>
+            {placed ? <section className="checkout-confirm" aria-label="Preview complete">
+                <p className="kicker">Preview complete</p>
+                <h2 className="display">Nothing was charged.</h2>
+                <p className="checkout-confirm-copy">When payments arrive, this step collects them. For now no order, reservation or payment exists, and the listing stays exactly as it was.</p>
+                <div className="checkout-confirm-actions"><button type="button" className="listing-primary" onClick={onClose}>Back to the artwork ↗</button></div>
+            </section> : <><header className="listing-heading"><p className="kicker">Demo checkout / {work.kind.split(' · ')[0]}</p><h2 className="display">Almost home.</h2><p>One artwork, straight to payment. No cart to manage.</p></header>
+            <p className="listing-notice">Checkout preview only. Payments are not connected yet: placing this order charges nothing, reserves nothing and creates no order.</p>
+            <div className="checkout-body">
+                <div className="checkout-summary"><div className="checkout-thumb"><img src={work.img} alt={work.title}/></div><div className="checkout-meta"><h3 className="display">{work.title}</h3><p>{work.artist}</p><p>{work.kind}</p></div></div>
+                <div className="checkout-side">
+                    <ol className="checkout-steps" aria-label="How checkout will work"><li><span>01</span>Your details</li><li><span>02</span>Payment</li><li><span>03</span>The piece is yours</li></ol>
+                    <p className="checkout-price-line"><span>Artwork price · illustrative</span><strong>{work.price}</strong></p>
+                    <button type="button" className="listing-primary" onClick={()=>setPlaced(true)}>Place order · preview ↗</button>
+                    <p className="listing-small">Prefer another price? Close this and use the offer demo on the artwork.</p>
+                </div>
+            </div></>}
+        </div>}
+    </dialog>;
+}
+
 function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onClose: () => void}) {
     const dialog = React.useRef<HTMLDialogElement>(null);
     const views = ['Full artwork','Angled view','Detail crop'];
@@ -191,6 +224,7 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
     const [tilt,setTilt] = useState(0);
     const [direction,setDirection] = useState(1);
     const [moving,setMoving] = useState(true);
+    const [buying,setBuying] = useState(false);
     const drag = React.useRef<{x:number;angle:number}|null>(null);
     const finishes = [{name:'Bare',tone:'#191b1b',edge:'transparent'},{name:'Oak',tone:'#343027',edge:'#a1815e'},{name:'Ink',tone:'#17282a',edge:'#111a1c'}];
     React.useEffect(() => {
@@ -245,7 +279,7 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
                     <div className="product-stage-caption"><span>View {String(viewIndex+1).padStart(2,'0')} / 03</span><span>{view==='Detail crop'?'A closer look at the same image':'Drag artwork to change perspective'}</span></div>
                 </div>
                 <div className="product-mini-notes" key={`notes-${view}`}><span>0{viewIndex+1} / {view==='Detail crop'?'Inside the image':view==='Angled view'?'A different perspective':'The whole picture'}</span><button type="button" className="product-motion-toggle" aria-pressed={!moving} onClick={()=>setMoving(!moving)}>{moving?'Pause motion':'Resume motion'}</button></div>
-                <div className="product-summary" aria-live="polite"><div><p className="kicker">{current.kind.split(' · ')[0]} / {current.artist}</p><h2 className="display">{current.title}</h2></div><div className="product-buyless"><strong>{current.price}</strong><span>Illustrative price</span></div></div>
+                <div className="product-summary" aria-live="polite"><div><p className="kicker">{current.kind.split(' · ')[0]} / {current.artist}</p><h2 className="display">{current.title}</h2></div><div className="product-buyless"><strong>{current.price}</strong><span>Illustrative price</span><button type="button" className="product-buy" onClick={()=>setBuying(true)}>Buy at {current.price} · preview ↗</button></div></div>
                 <section className="product-basic-specs" aria-label="Basic artwork details"><div className="spec-heading"><span>Piece details</span><span>Sample specifications</span></div><dl><div><dt>Size class</dt><dd>{specs.size}</dd></div><div><dt>{specs.dimensionLabel}</dt><dd>{specs.dimensions}</dd></div><div><dt>Art medium</dt><dd>{specs.medium}</dd></div>{current.kind.includes('Edition')&&<div><dt>Edition</dt><dd>{current.kind.split(' · ').pop()}</dd></div>}</dl><p>Demo sizes only. Actual dimensions and medium come from the artist.</p></section>
                 <OfferDemo key={current.title} work={current}/>
                 <div className="product-toolbar"><div className="product-buttons" aria-label="Artwork view">{views.map(v=><button type="button" key={v} aria-pressed={view===v} onClick={()=>{setDirection(views.indexOf(v)>=viewIndex?1:-1);setView(v);setTilt(0);}}>{v}</button>)}</div><div className="product-finishes" aria-label="Display frame">{finishes.map((v,i)=><button type="button" key={v.name} aria-label={`${v.name} display`} aria-pressed={finish===i} onClick={()=>{setDirection(1);setFinish(i);}}><span style={{background:i===0?'#777':v.edge}}/>{v.name}</button>)}</div></div>
@@ -258,6 +292,7 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
                 <p className="product-disclaimer">Illustrative concept only. Artwork, artists, mediums and prices are dummy content. Perspective uses a flat image, not a 3D scan. Display frames are visual studies, not purchase options. Nothing is for sale.</p>
             </section>
         </div>}
+        <CheckoutDemo work={buying ? current : null} onClose={()=>setBuying(false)}/>
     </dialog>;
 }
 
@@ -398,5 +433,5 @@ export function App(){
  const loading=<div style={{background:'#0b0b0c',color:'#efeee8',minHeight:'100vh',padding:32}} role="status">Opening your space...</div>;
  const account=<React.Suspense fallback={loading}><AccountPage onGuest={continueAsGuest}/></React.Suspense>;
  const entry=checking?loading:(signedIn||guest?<Gallery signedIn={signedIn}/>:account);
- return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/order-history" element={<React.Suspense fallback={loading}><OrderHistory/></React.Suspense>}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/><Route path="/artwork/:slug" element={<React.Suspense fallback={loading}><ArtworkPage/></React.Suspense>}/><Route path="/artist/:slug" element={<React.Suspense fallback={loading}><ArtistPage/></React.Suspense>}/></Routes>;
+ return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/order-history" element={<React.Suspense fallback={loading}><OrderHistory/></React.Suspense>}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/><Route path="/artwork/:slug" element={<React.Suspense fallback={loading}><ArtworkPage/></React.Suspense>}/><Route path="/artist/:slug" element={<React.Suspense fallback={loading}><ArtistPage/></React.Suspense>}/><Route path="/buy/:slug" element={<React.Suspense fallback={loading}><CheckoutPage/></React.Suspense>}/></Routes>;
 }
