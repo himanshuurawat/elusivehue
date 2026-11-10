@@ -22,6 +22,10 @@ export type MyOrderRequest = {
   delivery_pin: string;
   buyer_email: string;
   created_at: string;
+  payment_state: 'none' | 'buyer_marked' | 'received' | 'missing';
+  qr_path_snapshot: string;
+  upi_id_snapshot: string;
+  payee_name_snapshot: string;
 };
 
 export type ArtistOrderRequest = {
@@ -30,6 +34,7 @@ export type ArtistOrderRequest = {
   status: OrderStatus;
   amount_inr: number;
   created_at: string;
+  payment_state: 'none' | 'buyer_marked' | 'received' | 'missing';
   first_name: string;
   area: string;
   buyer_name: string | null;

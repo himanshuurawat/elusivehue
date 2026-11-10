@@ -146,7 +146,7 @@ export function CheckoutPage() {
               {active.status === 'pending'
                 ? `${name} will confirm or decline your request for ${work.title} at ₹${active.amount_inr.toLocaleString('en-IN')}. They see your first name and area now, and your full contact details only after they confirm.`
                 : active.status === 'confirmed'
-                  ? `${name} now has your contact details for ${work.title} at ₹${active.amount_inr.toLocaleString('en-IN')}. They will reach out about the next step. Payments are not connected yet, so nothing was charged.`
+                  ? `${name} now has your contact details for ${work.title} at ₹${active.amount_inr.toLocaleString('en-IN')}. They will reach out about the next step. Nothing was charged.`
                   : `${name} could not take this request. Nothing was charged.`}
             </p>
             {active.status === 'pending' ? (
@@ -171,7 +171,7 @@ export function CheckoutPage() {
               One artwork, one request. The artist confirms before anything else happens.
             </p>
             <p className="pub-note pub-rise pub-checkout-notice" style={rise('0.24s')}>
-              Payments are not connected yet. Sending this request charges nothing and does not reserve the piece.
+              Sending this request charges nothing and does not reserve the piece. Once the artist confirms, you pay them directly in your UPI app.
             </p>
             <div className="pub-checkout-body">
               <section className="pub-checkout-summary pub-rise" style={rise('0.3s')} aria-label="Artwork summary">

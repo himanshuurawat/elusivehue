@@ -418,7 +418,7 @@ export function PublicFooter({demo}: {demo?: boolean}) {
     <footer className="pub-foot pub-rise" style={rise('0.68s')}>
       {demo
         ? 'Demo preview only. Artwork, artist, price and followers are dummy content. Nothing is for sale.'
-        : 'Shared by the artist. Follows and offers are saved to accounts. Payments are not connected yet.'}
+        : 'Shared by the artist. Follows and offers are saved to accounts. Once the artist confirms an order, you pay them directly.'}
     </footer>
   );
 }
@@ -565,7 +565,7 @@ function BuyOffer({client, work}: {client: SupabaseClient; work: SharedArtwork})
   } else {
     offerArea = <div className="pub-offer-state">
       <p><strong>Agreed at {money(offer.amount_inr)}.</strong></p>
-      <p className="pub-note">Payments are not connected yet, so nothing is charged or reserved. The artist can see this agreement.</p>
+      <p className="pub-note">Nothing is charged or reserved here. The artist can see this agreement.</p>
       <Link className="pub-buy" to={`/buy/${artworkParam(work)}`}>Send order request at {money(offer.amount_inr)} ↗</Link>
     </div>;
   }
