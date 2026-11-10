@@ -96,15 +96,15 @@ export function OrderPayPage() {
         <p className="workspace-intro">{work ? work.title : 'Your order'} · {rupees(order.amount_inr)}. You pay the artist directly in your UPI app; nothing is charged here.</p>
         {!hasDetails ? <div className="workspace-empty"><p>The artist has not added their payment details yet. They have your contact details from accepting the order, so you can also reach them directly.</p></div> : <>
           {qrUrl && <p><img src={qrUrl} alt="Artist's UPI QR for this order" style={{maxWidth: 280, width: '100%', borderRadius: 12, background: '#fff', padding: 8}}/></p>}
-          {order.upi_id_snapshot && <p className="offer-note">UPI ID: <strong>{order.upi_id_snapshot}</strong>{' '}<button type="button" onClick={() => void copy('upi', order.upi_id_snapshot)}>{copied === 'upi' ? 'Copied' : 'Copy'}</button></p>}
-          {order.payee_name_snapshot && <p className="offer-note">Payee name: <strong>{order.payee_name_snapshot}</strong>{' '}<button type="button" onClick={() => void copy('payee', order.payee_name_snapshot)}>{copied === 'payee' ? 'Copied' : 'Copy'}</button></p>}
+          {order.upi_id_snapshot && <p className="offer-note">UPI ID: <strong>{order.upi_id_snapshot}</strong>{' '}<button type="button" className="pay-copy" onClick={() => void copy('upi', order.upi_id_snapshot)}>{copied === 'upi' ? 'Copied' : 'Copy'}</button></p>}
+          {order.payee_name_snapshot && <p className="offer-note">Payee name: <strong>{order.payee_name_snapshot}</strong>{' '}<button type="button" className="pay-copy" onClick={() => void copy('payee', order.payee_name_snapshot)}>{copied === 'payee' ? 'Copied' : 'Copy'}</button></p>}
           <p className="offer-note">Paying on the same phone? Open your UPI app and pay the UPI ID above as a new payment of {rupees(order.amount_inr)}.</p>
           <p className="offer-note"><strong>Check the name shown in your app matches the artist before you pay.</strong> Pay only the details shown here, inside your order - never a code sent over chat.</p>
           {order.payment_state === 'received' ? <p className="offer-note"><strong>Payment received.</strong> The artist confirmed {rupees(order.amount_inr)} from their own app. Your order is placed.</p>
             : order.payment_state === 'buyer_marked' ? <p className="offer-note" role="status">The artist is checking their UPI app for your {rupees(order.amount_inr)}. This updates when they answer.</p>
             : <>
               {order.payment_state === 'missing' && <p className="offer-note" role="alert">The artist could not find this payment in their app yet. Keep your receipt and check that you paid the exact details above, then mark it again once it lands.</p>}
-              <p><button className="profile-save" type="button" disabled={busy} onClick={() => void paid()}>{busy ? 'Marking...' : 'I have paid'} <span>↗</span></button></p>
+              <p className="pay-actions"><button className="pay-primary" type="button" disabled={busy} onClick={() => void paid()}>{busy ? 'Marking...' : 'I have paid'} <span>↗</span></button></p>
             </>}
           <p className="offer-note">For payment issues, contact the artist. Keep your receipt; this page does not define refund or complaint policies.</p>
         </>}
