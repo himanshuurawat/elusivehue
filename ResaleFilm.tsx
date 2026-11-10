@@ -55,7 +55,7 @@ export function ResaleFilm(){
    const a=Math.min(1,Math.floor(p));const raw=p-a;const t=ease(raw);const A=poses[a],B=poses[a+1];
    const nearest=Math.round(p);if(nearest!==sceneRef.current){sceneRef.current=nearest;setScene(nearest)}
    const x=mobile?mix(50,56,ease(p-1)):mix(A.x,B.x,t);
-   const y=mobile?48:mix(A.y,B.y,t);const scale=mix(A.s,B.s,t)*(mobile?.9/.72:1/.85);
+   const y=mobile?48:mix(A.y,B.y,t);const turnRoom=mobile&&a===1?1-.12*Math.sin(Math.PI*t):1;const scale=mix(A.s,B.s,t)*(mobile?.9/.72:1/.85)*turnRoom;
    anchor.style.transform=`translate3d(${w*x/100-aw/2}px,${h*y/100-ah/2}px,0) scale(${scale}) rotate(${mix(A.rot,B.rot,t)}deg)`;
    backdrops[0].style.opacity=String(ease(p));backdrops[1].style.opacity=String(ease(p-1));
    // Maintain contrast on every canvas. Scene copy is hidden while ink switches.
