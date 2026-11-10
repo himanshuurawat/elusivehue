@@ -8,7 +8,7 @@ import './resale-view.css';
  * Resale item detail view. Dummy shelf data only - no real listings, orders
  * or payments. 3D follows the approved direction: a listing shows the
  * seller's own 3D model when one exists, photos otherwise. The sample model
- * here loads on demand (17 MB) with the photo as poster and fallback, and
+ * here loads on demand (1.3 MB) with the photo as poster and fallback, and
  * auto-rotate is skipped under prefers-reduced-motion.
  */
 
@@ -52,7 +52,7 @@ export function ResaleItemPage() {
             <img src={item.img} alt={item.title} />
             {item.model && (
               <button type="button" className="rv-3d-btn" onClick={() => setLoad3d(true)}>
-                View in 3D <span>17 MB sample, loads on demand</span>
+                View in 3D <span>1.3 MB sample, loads on demand</span>
               </button>
             )}
           </>
