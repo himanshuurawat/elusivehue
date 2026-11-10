@@ -15,7 +15,9 @@ import './resale-view.css';
 
 export function ResaleItemPage() {
   const {slug} = useParams<{slug: string}>();
- if(slug==='volt-35mm-slr')return <ResaleFilm/>;
+  return slug==='volt-35mm-slr'?<ResaleFilm/>:<ResalePhotoPage slug={slug}/>;
+}
+function ResalePhotoPage({slug}:{slug?:string}){
   const item = RESALE_ITEMS.find(i => i.slug === slug);
   const [load3d, setLoad3d] = useState(false);
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
