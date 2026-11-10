@@ -16,7 +16,23 @@ export function ResaleFilm(){
  const fixed=useRef(0);const current=useRef(0);const sceneRef=useRef(0);
  const span=useRef(1);
  const jump=useRef<{from:number;to:number;at:number}|null>(null);
+ const swipe=useRef<{x:number;y:number;vertical:boolean}|null>(null);
  const off=reduced||paused;
+ function swipeStart(e:React.TouchEvent<HTMLElement>){
+  swipe.current=null;if(free||photo||e.touches.length!==1||(e.target as Element).closest('button,a,dialog'))return;
+  const t=e.touches[0];swipe.current={x:t.clientX,y:t.clientY,vertical:false};
+ }
+ function swipeMove(e:React.TouchEvent<HTMLElement>){
+  const g=swipe.current;if(!g)return;if(e.touches.length!==1){swipe.current=null;return}
+  const t=e.touches[0];const dx=Math.abs(t.clientX-g.x),dy=Math.abs(t.clientY-g.y);
+  if(dy>18&&dy>dx)g.vertical=true;
+ }
+ function swipeEnd(e:React.TouchEvent<HTMLElement>){
+  const g=swipe.current;swipe.current=null;if(!g||g.vertical||free||photo||e.changedTouches.length!==1)return;
+  const t=e.changedTouches[0],dx=t.clientX-g.x,dy=t.clientY-g.y;
+  if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.4)return;
+  const n=Math.max(0,Math.min(2,sceneRef.current+(dx<0?1:-1)));if(n!==sceneRef.current)go(n);
+ }
  useEffect(()=>{window.scrollTo(0,0);const mq=matchMedia('(prefers-reduced-motion: reduce)');const fn=()=>setReduced(mq.matches);mq.addEventListener('change',fn);return()=>mq.removeEventListener('change',fn)},[]);
  useEffect(()=>{const m=viewer.current;if(!m)return;const done=()=>setLoaded(true);const fail=()=>{setError(true);setLoaded(false)};m.addEventListener('load',done);m.addEventListener('error',fail);if(m.loaded)setLoaded(true);return()=>{m.removeEventListener('load',done);m.removeEventListener('error',fail)}},[error,attempt]);
  useEffect(()=>{
@@ -68,7 +84,7 @@ export function ResaleFilm(){
  },[off,free,loaded,attempt]);
  function go(n:number){setFree(false);fixed.current=n;if(off){jump.current=null;current.current=n;setScene(n)}else {jump.current={from:scrollY,to:n*span.current,at:performance.now()}}window.dispatchEvent(new Event('scroll'))}
  return <main ref={root} className={`rf-root ${loaded?'rf-ready':''} ${off?'rf-off':''}`}>
-  <div className={`rf-scroll ${reduced?'rf-short':''}`}><section className="rf-stage">
+  <div className={`rf-scroll ${reduced?'rf-short':''}`}><section className="rf-stage" onTouchStart={swipeStart} onTouchMove={swipeMove} onTouchEnd={swipeEnd} onTouchCancel={()=>{swipe.current=null}}>
    <header className="rf-nav"><Link to="/" className="rf-logo">elusive·hue</Link><span>OBJECT STUDIES / 001</span><Link to="/">Gallery ↗</Link></header>
    <div className="rf-backdrop rf-backdrop-green" aria-hidden="true"/><div className="rf-backdrop rf-backdrop-dark" aria-hidden="true"/><div className="rf-light" aria-hidden="true"/>
    <div className="rf-watermark" aria-hidden="true">{scene===0?'01':scene===1?'02':'03'}</div>
@@ -76,15 +92,15 @@ export function ResaleFilm(){
    <div className="rf-copy rf-copy-1"><span className="rf-eyebrow">TURN THE FAMILIAR</span><h2>A different<br/><i>point of view.</i></h2><p>One object. Every angle.<br/>A closer look at the sample's form.</p></div>
    <div className="rf-copy rf-copy-2"><span className="rf-eyebrow">LOOK A LITTLE CLOSER</span><h2>Details make<br/><i>the difference.</i></h2><p>Keep something good<br/>in the picture.</p></div>
    <div className="rf-object-anchor"><div className="rf-product">
-    {!error?<model-viewer ref={(m:Viewer|null)=>{viewer.current=m}} src={`/models/camera-body.glb?attempt=${attempt}`} alt="Antique camera body, cropped CC0 demonstration model, not the dummy SLR listing" interpolation-decay="1" environment-image="neutral" shadow-intensity="0" exposure="1.15" interaction-prompt="none" {...(free?{'camera-controls':'','touch-action':'pan-y'}:{})}/>:<div className="rf-preflight"><span className="rf-orbit-icon" aria-hidden="true">↻</span><p>The model could not load.</p><button onClick={()=>{setAttempt(a=>a+1);setLoaded(false);setError(false)}}>Try 3D again ↗</button><small>0.78 MB sample</small></div>}
+    {!error?<model-viewer ref={(m:Viewer|null)=>{viewer.current=m}} src={`/models/camera-body.glb?attempt=${attempt}`} alt="Antique camera body, cropped CC0 demonstration model, not the dummy SLR listing" interpolation-decay="1" environment-image="neutral" shadow-intensity="0" exposure="1.15" touch-action="pan-y" interaction-prompt="none" {...(free?{'camera-controls':''}:{})}/>:<div className="rf-preflight"><span className="rf-orbit-icon" aria-hidden="true">↻</span><p>The model could not load.</p><button onClick={()=>{setAttempt(a=>a+1);setLoaded(false);setError(false)}}>Try 3D again ↗</button><small>0.78 MB sample</small></div>}
    </div></div>
    {!loaded&&!error&&<p className="rf-loading" role="status">Loading sample camera... 0.78 MB</p>}
    <div className="rf-object-note"><span>ANTIQUE CAMERA / SAMPLE MODEL</span><p className="rf-scene-label">Camera body in three-quarter view.</p><p className="rf-scene-label">A continuous turn, not a second image.</p><p className="rf-scene-label">Move closer. The same model stays on stage.</p></div>
    <div className="rf-tools">{loaded&&<button onClick={()=>{if(free)viewer.current?.removeAttribute('camera-orbit');setFree(!free)}}>{free?'Return to story':'Inspect freely'} ↗</button>}<button onClick={()=>setPhoto(true)}>Original listing photo ↗</button><button disabled={reduced} onClick={()=>{fixed.current=current.current;jump.current=null;pause(!paused)}}>{reduced?'Reduced motion':paused?'Resume motion':'Pause motion'}</button></div>
    {free&&<p className="rf-free-hint">Drag to orbit · pinch or scroll to zoom</p>}
-   <footer className="rf-controller"><span className="rf-demo">DESIGN STUDY · NOT FOR SALE</span><nav aria-label="Product story scenes">{['First look','Every angle','Closer'].map((v,i)=><button key={v} className={scene===i?'active':''} aria-current={scene===i?'step':undefined} onClick={()=>go(i)}><b>0{i+1}</b><span>{v}</span></button>)}</nav><span className="rf-scroll-cue">{reduced?'Choose a view above':paused?'Motion paused':'Scroll to explore ↓'}</span></footer>
+   <footer className="rf-controller"><span className="rf-demo">DESIGN STUDY · NOT FOR SALE</span><nav aria-label="Product story scenes">{['First look','Every angle','Closer'].map((v,i)=><button key={v} className={scene===i?'active':''} aria-current={scene===i?'step':undefined} onClick={()=>go(i)}><b>0{i+1}</b><span>{v}</span></button>)}</nav><span className="rf-scroll-cue">{reduced?'Choose a view above':paused?'Motion paused':'Swipe ↔ or scroll ↓'}</span></footer>
   </section></div>
   <section className="rf-listing"><div><span className="rf-eyebrow">THE LISTING / DEMO DATA</span><h2>{item.title}</h2><p>{item.price} <small>Illustrative price</small></p></div><div><p>{item.blurb}</p><p>Listed by {item.seller}. {item.kind}.</p><p className="rf-caveat">This antique camera body is a cropped and optimized Khronos CC0 sample by Maximillan Kamps / UX3D. It is not the exact SLR in the listing photo. Dummy listing only; nothing is for sale and ordering is not enabled.</p><Link to="/">Back to the shelf ↗</Link></div></section>
   {photo&&<dialog ref={dialog} className="rf-photo-dialog" aria-label="Original listing photograph" onCancel={()=>setPhoto(false)}><button onClick={()=>setPhoto(false)} autoFocus>Close photo ×</button><img src={item.img} alt="Photo for the dummy Volt 35mm SLR listing"/><p>Original dummy listing photo. The 3D camera is a different sample.</p></dialog>}
  </main>;
-}
+   }
