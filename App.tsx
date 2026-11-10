@@ -8,6 +8,7 @@ const AccountPage=React.lazy(()=>import('./AccountPage').then(m=>({default:m.Acc
 const ArtworkPage=React.lazy(()=>import('./PublicPages').then(m=>({default:m.ArtworkPage})));
 const CheckoutPage=React.lazy(()=>import('./CheckoutPage').then(m=>({default:m.CheckoutPage})));
 const OrderPayPage=React.lazy(()=>import('./OrderPayPage').then(m=>({default:m.OrderPayPage})));
+const PaymentPreview=React.lazy(()=>import('./PaymentPreview').then(m=>({default:m.PaymentPreview})));
 const ArtistPage=React.lazy(()=>import('./PublicPages').then(m=>({default:m.ArtistPage})));
 import {slugFor} from './publicSlug';
 import {heroWide,artEmber,artGlitch,artFigure,artVessel,artContour,artCollage} from './artwork';
