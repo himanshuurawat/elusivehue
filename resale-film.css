@@ -13,3 +13,5 @@
 
 .rf-scroll-cue{font-size:10px;letter-spacing:.6px;line-height:1.5;opacity:.75}.rf-loading{pointer-events:none}
 @media(max-width:760px){.rf-scroll-cue{font-size:9px}}
+
+.rf-stage{touch-action:pan-y}.rf-product model-viewer{touch-action:pan-y}
