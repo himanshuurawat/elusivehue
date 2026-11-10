@@ -48,3 +48,7 @@ responses (TEST data only, no live accounts). This is visual/layout evidence,
 not an additional live end-to-end run. prefers-reduced-motion is honored:
 entry animations are disabled under reduce (checked programmatically and in
 pixels).
+
+## Release
+
+Merged to main and live in production on 2026-11-10 via PR #25 (squash merge).
