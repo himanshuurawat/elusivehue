@@ -58,8 +58,10 @@ function PaymentAnswer({client, requestId, onDone}: {client: Client; requestId: 
     finally {setBusy('');}
   };
   return <>
-    <button type="button" disabled={Boolean(busy)} onClick={() => void answer('received')}>{busy === 'received' ? 'Saving...' : 'Payment received in my app'}</button>{' '}
-    <button type="button" disabled={Boolean(busy)} onClick={() => void answer('missing')}>{busy === 'missing' ? 'Saving...' : "I can't find this payment"}</button>
+    <span className="pay-actions">
+    <button type="button" className="pay-primary" disabled={Boolean(busy)} onClick={() => void answer('received')}>{busy === 'received' ? 'Saving...' : 'Payment received in my app'}</button>
+    <button type="button" className="pay-secondary" disabled={Boolean(busy)} onClick={() => void answer('missing')}>{busy === 'missing' ? 'Saving...' : "I can't find this payment"}</button>
+    </span>
     {error && <span role="alert"> {error}</span>}
   </>;
 }
