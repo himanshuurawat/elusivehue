@@ -912,3 +912,14 @@ body { background: #0a0909; }
 .listing-desc{font-size:13px;line-height:1.7;color:var(--ink2);margin:0;overflow-wrap:anywhere;white-space:pre-line}
 .listing-fields textarea{width:100%;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:12px;resize:vertical}
 @media(max-width:650px){.checkout-dialog .checkout-body{grid-template-columns:1fr;gap:28px}.checkout-thumb{aspect-ratio:4/4}}
+
+/* Theme ink reveal (View Transitions) */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) {
+    z-index: 2;
+    -webkit-mask-image: var(--ink-url); mask-image: var(--ink-url);
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-position: var(--ink-x) var(--ink-y); mask-position: var(--ink-x) var(--ink-y);
+    -webkit-mask-size: 0 0; mask-size: 0 0;
+}
