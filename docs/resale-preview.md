@@ -30,3 +30,15 @@ Optimized from 17,540,348 bytes to 1,291,800 bytes using glTF Transform 4.5.1: W
 - Every remote source blob and binary is compared with local Git hashes before preview deployment.
 
 All prices, seller names, item descriptions and product photos remain illustrative demo content. No real purchase is enabled. This is a usable preview, not a complete resale marketplace or a production-readiness claim. A real-device check remains desirable before a later approved production release.
+
+## Deployed preview verification
+
+Preview PR: https://github.com/himanshuurawat/elusivehue/pull/26
+
+Cloudflare Pages deployment for auth-preview commit 7bddceb8 succeeded. Verified on November 10, 2026:
+
+https://auth-preview.elusivehue.pages.dev/#/resale/volt-35mm-slr
+
+Live browser checks at 390px and 1440px: shelf navigation, photo-first state, zero model requests before tapping 3D, model loaded successfully after one request, return-to-photo, and no page errors. Reduced-motion run has no auto-rotate. Both other item routes and unknown-item fallback render. Deployed model byte-compared against the optimized local asset. Final live motion videos and mobile/desktop pixels were inspected. Main remained 44223df during verification.
+
+The preview conflict resolution preserves the older payment-demo route. Any separately approved main release must use the clean resale-only changes, not merge this preview branch wholesale.
