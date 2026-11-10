@@ -10,3 +10,6 @@
 .rf-product::after{content:"";position:absolute;left:22%;bottom:8%;width:56%;height:6%;background:radial-gradient(ellipse,#16201f28,transparent 70%);z-index:-1;pointer-events:none}
 
 .rf-backdrop{position:absolute;inset:0;pointer-events:none;z-index:-1;opacity:0;will-change:opacity}.rf-backdrop-green{background:#a5c9bd}.rf-backdrop-dark{background:#1d2629}.rf-light{z-index:0}.rf-object-anchor{contain:layout style;transform-origin:center}.rf-copy,.rf-scene-label{will-change:transform,opacity}
+
+.rf-scroll-cue{font-size:10px;letter-spacing:.6px;line-height:1.5;opacity:.75}.rf-loading{pointer-events:none}
+@media(max-width:760px){.rf-scroll-cue{font-size:9px}}
