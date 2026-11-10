@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
-import {Routes, Route} from 'react-router-dom';
+import {Routes, Route, Link} from 'react-router-dom';
 const OrderHistory=React.lazy(()=>import('./OrderHistory').then(m=>({default:m.OrderHistory})));
+const ResaleItemPage=React.lazy(()=>import('./ResaleItemPage').then(m=>({default:m.ResaleItemPage})));
 const MyOrders=React.lazy(()=>import('./MyOrders').then(m=>({default:m.MyOrders})));
 const MyArtworks=React.lazy(()=>import('./ArtworkStudio').then(m=>({default:m.MyArtworks})));
 const AccountPage=React.lazy(()=>import('./AccountPage').then(m=>({default:m.AccountPage})));
@@ -9,7 +10,8 @@ const CheckoutPage=React.lazy(()=>import('./CheckoutPage').then(m=>({default:m.C
 const OrderPayPage=React.lazy(()=>import('./OrderPayPage').then(m=>({default:m.OrderPayPage})));
 const ArtistPage=React.lazy(()=>import('./PublicPages').then(m=>({default:m.ArtistPage})));
 import {slugFor} from './publicSlug';
-import {heroWide,artEmber,artGlitch,artFigure,artVessel,artContour,artCollage,resaleCamera,resaleBrushes,resaleJacket} from './artwork';
+import {heroWide,artEmber,artGlitch,artFigure,artVessel,artContour,artCollage} from './artwork';
+import {RESALE_ITEMS} from './resale-items';
 const DOT = '\u00B7';
 const RU = '\u20B9';
 
@@ -23,12 +25,6 @@ const works = [
     { img: artCollage, title: 'Mended', artist: 'Arjun Dev', price: `${RU}11,300`, kind: `Physical ${DOT} Mixed media` },
 ];
 
-const resale = [
-    { img: resaleCamera, title: 'Volt 35mm SLR', seller: 'Aarav S. · Jaipur', price: `${RU}7,999`, kind: `Camera ${DOT} Good condition` },
-    { img: resaleBrushes, title: 'Studio brush set of 12', seller: 'Priya M. · Pune', price: `${RU}850`, kind: `Art supplies ${DOT} Used` },
-    { img: resaleJacket, title: 'Black denim jacket, M', seller: 'Dev R. · Delhi', price: `${RU}1,600`, kind: `Clothing ${DOT} Worn in` },
-];
-
 function ResaleShelf() {
     return <section className="r-sec">
         <div className="head">
@@ -37,8 +33,9 @@ function ResaleShelf() {
         </div>
         <p className="note rise">Separate from the art: the plan is that anyone can also list personal belongings here: gear, supplies, clothes, collectibles. Items, sellers and prices shown are dummy data for layout only.</p>
         <div className="r-grid">
-            {resale.map((r, i) => (
-                <article className="r-card rise" style={{ animationDelay: `${0.15 + i * 0.1}s` }} key={r.title}>
+            {RESALE_ITEMS.map((r, i) => (
+                <Link to={`/resale/${r.slug}`} className="r-card-link" key={r.title} aria-label={`View ${r.title}`}>
+                <article className="r-card rise" style={{ animationDelay: `${0.15 + i * 0.1}s` }}>
                     <div className="ph">
                         <img src={r.img} alt={r.title} />
                         <span className="cond">{r.kind}</span>
@@ -46,6 +43,7 @@ function ResaleShelf() {
                     <div className="row"><span className="t">{r.title}</span><span className="p">{r.price}</span></div>
                     <div className="a">Listed by {r.seller}</div>
                 </article>
+                </Link>
             ))}
         </div>
     </section>;
@@ -435,5 +433,5 @@ export function App(){
  const loading=<div style={{background:'#0b0b0c',color:'#efeee8',minHeight:'100vh',padding:32}} role="status">Opening your space...</div>;
  const account=<React.Suspense fallback={loading}><AccountPage onGuest={continueAsGuest}/></React.Suspense>;
  const entry=checking?loading:(signedIn||guest?<Gallery signedIn={signedIn}/>:account);
- return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/order-history" element={<React.Suspense fallback={loading}><OrderHistory/></React.Suspense>}/><Route path="/orders" element={<React.Suspense fallback={loading}><MyOrders/></React.Suspense>}/><Route path="/orders/:id/pay" element={<React.Suspense fallback={loading}><OrderPayPage/></React.Suspense>}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/><Route path="/artwork/:slug" element={<React.Suspense fallback={loading}><ArtworkPage/></React.Suspense>}/><Route path="/artist/:slug" element={<React.Suspense fallback={loading}><ArtistPage/></React.Suspense>}/><Route path="/buy/:slug" element={<React.Suspense fallback={loading}><CheckoutPage/></React.Suspense>}/></Routes>;
-}
+ return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/order-history" element={<React.Suspense fallback={loading}><OrderHistory/></React.Suspense>}/><Route path="/orders" element={<React.Suspense fallback={loading}><MyOrders/></React.Suspense>}/><Route path="/orders/:id/pay" element={<React.Suspense fallback={loading}><OrderPayPage/></React.Suspense>}/><Route path="/resale/:slug" element={<React.Suspense fallback={loading}><ResaleItemPage/></React.Suspense>}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/><Route path="/artwork/:slug" element={<React.Suspense fallback={loading}><ArtworkPage/></React.Suspense>}/><Route path="/artist/:slug" element={<React.Suspense fallback={loading}><ArtistPage/></React.Suspense>}/><Route path="/buy/:slug" element={<React.Suspense fallback={loading}><CheckoutPage/></React.Suspense>}/></Routes>;
+        }
