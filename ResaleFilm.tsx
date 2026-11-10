@@ -8,7 +8,7 @@ type Viewer=HTMLElement&{loaded?:boolean};
 export function ResaleFilm(){
  const item=RESALE_ITEMS[0];
  const root=useRef<HTMLElement>(null);const viewer=useRef<Viewer|null>(null);
- const [attempt,setAttempt]=useState(0);const [started,start]=useState(false);const [loaded,setLoaded]=useState(false);const [error,setError]=useState(false);
+ const [attempt,setAttempt]=useState(0);const [loaded,setLoaded]=useState(false);const [error,setError]=useState(false);
  const [free,setFree]=useState(false);const [reduced,setReduced]=useState(()=>matchMedia('(prefers-reduced-motion: reduce)').matches);
  const [paused,pause]=useState(false);const [scene,setScene]=useState(0);const [photo,setPhoto]=useState(false);
  const dialog=useRef<HTMLDialogElement>(null);
@@ -18,7 +18,7 @@ export function ResaleFilm(){
  const jump=useRef<{from:number;to:number;at:number}|null>(null);
  const off=reduced||paused;
  useEffect(()=>{window.scrollTo(0,0);const mq=matchMedia('(prefers-reduced-motion: reduce)');const fn=()=>setReduced(mq.matches);mq.addEventListener('change',fn);return()=>mq.removeEventListener('change',fn)},[]);
- useEffect(()=>{const m=viewer.current;if(!m)return;const done=()=>setLoaded(true);const fail=()=>{setError(true);setLoaded(false)};m.addEventListener('load',done);m.addEventListener('error',fail);if(m.loaded)setLoaded(true);return()=>{m.removeEventListener('load',done);m.removeEventListener('error',fail)}},[started,error]);
+ useEffect(()=>{const m=viewer.current;if(!m)return;const done=()=>setLoaded(true);const fail=()=>{setError(true);setLoaded(false)};m.addEventListener('load',done);m.addEventListener('error',fail);if(m.loaded)setLoaded(true);return()=>{m.removeEventListener('load',done);m.removeEventListener('error',fail)}},[error,attempt]);
  useEffect(()=>{
   const stop=()=>{jump.current=null};const key=(e:KeyboardEvent)=>{if(['ArrowDown','ArrowUp','PageDown','PageUp','Home','End',' '].includes(e.key))stop()};
   window.addEventListener('wheel',stop,{passive:true});window.addEventListener('touchstart',stop,{passive:true});window.addEventListener('keydown',key);
@@ -36,7 +36,7 @@ export function ResaleFilm(){
   let w=0,h=0,aw=0,ah=0,mobile=false;
   const measure=()=>{w=stage.clientWidth;h=stage.clientHeight;aw=anchor.offsetWidth;ah=anchor.offsetHeight;mobile=w<=760;span.current=Math.max(1,(track.offsetHeight-h)/2);last=-1};
   measure();
-  const wake=()=>{if(!frame&&alive){stamp=performance.now();frame=requestAnimationFrame(tick)}};
+  const wake=()=>{if(!frame&&alive){stamp=performance.now()-16;frame=requestAnimationFrame(tick)}};
   const resize=()=>{measure();wake()};
   window.addEventListener('scroll',wake,{passive:true});window.addEventListener('resize',resize);
   const mix=(a:number,b:number,p:number)=>a+(b-a)*p;
@@ -51,7 +51,7 @@ export function ResaleFilm(){
    const target=off?fixed.current:Math.min(2,Math.max(0,window.scrollY/span.current));
    current.current=off?target:mix(current.current,target,1-Math.exp(-dt/210));
    if(Math.abs(current.current-target)<.0002)current.current=target;
-   const p=current.current;if(Math.abs(p-last)<.00002&&!jump.current)return;last=p;
+   const p=current.current;if(Math.abs(p-last)<.00002&&!jump.current){if(Math.abs(p-target)>.0002)frame=requestAnimationFrame(tick);return}last=p;
    const a=Math.min(1,Math.floor(p));const raw=p-a;const t=ease(raw);const A=poses[a],B=poses[a+1];
    const nearest=Math.round(p);if(nearest!==sceneRef.current){sceneRef.current=nearest;setScene(nearest)}
    const x=mobile?mix(50,56,ease(p-1)):mix(A.x,B.x,t);
@@ -76,13 +76,13 @@ export function ResaleFilm(){
    <div className="rf-copy rf-copy-1"><span className="rf-eyebrow">TURN THE FAMILIAR</span><h2>A different<br/><i>point of view.</i></h2><p>One object. Every angle.<br/>A closer look at the sample's form.</p></div>
    <div className="rf-copy rf-copy-2"><span className="rf-eyebrow">LOOK A LITTLE CLOSER</span><h2>Details make<br/><i>the difference.</i></h2><p>Keep something good<br/>in the picture.</p></div>
    <div className="rf-object-anchor"><div className="rf-product">
-    {started&&!error?<model-viewer ref={(m:Viewer|null)=>{viewer.current=m}} src={`/models/camera-body.glb?attempt=${attempt}`} alt="Antique camera body, cropped CC0 demonstration model, not the dummy SLR listing" interpolation-decay="1" environment-image="neutral" shadow-intensity="0" exposure="1.15" interaction-prompt="none" {...(free?{'camera-controls':'','touch-action':'pan-y'}:{})}/>:<div className="rf-preflight"><span className="rf-orbit-icon" aria-hidden="true">↻</span><p>{error?'The model could not load.':'A three-scene product study.'}</p><button onClick={()=>{setAttempt(a=>a+1);setLoaded(false);start(true);setError(false)}}>{error?'Try 3D again':'Play the 3D story'} ↗</button><small>0.78 MB sample · loads only on tap</small></div>}
+    {!error?<model-viewer ref={(m:Viewer|null)=>{viewer.current=m}} src={`/models/camera-body.glb?attempt=${attempt}`} alt="Antique camera body, cropped CC0 demonstration model, not the dummy SLR listing" interpolation-decay="1" environment-image="neutral" shadow-intensity="0" exposure="1.15" interaction-prompt="none" {...(free?{'camera-controls':'','touch-action':'pan-y'}:{})}/>:<div className="rf-preflight"><span className="rf-orbit-icon" aria-hidden="true">↻</span><p>The model could not load.</p><button onClick={()=>{setAttempt(a=>a+1);setLoaded(false);setError(false)}}>Try 3D again ↗</button><small>0.78 MB sample</small></div>}
    </div></div>
-   {started&&!loaded&&!error&&<p className="rf-loading" role="status">Loading sample camera... 0.78 MB</p>}
+   {!loaded&&!error&&<p className="rf-loading" role="status">Loading sample camera... 0.78 MB</p>}
    <div className="rf-object-note"><span>ANTIQUE CAMERA / SAMPLE MODEL</span><p className="rf-scene-label">Camera body in three-quarter view.</p><p className="rf-scene-label">A continuous turn, not a second image.</p><p className="rf-scene-label">Move closer. The same model stays on stage.</p></div>
    <div className="rf-tools">{loaded&&<button onClick={()=>{if(free)viewer.current?.removeAttribute('camera-orbit');setFree(!free)}}>{free?'Return to story':'Inspect freely'} ↗</button>}<button onClick={()=>setPhoto(true)}>Original listing photo ↗</button><button disabled={reduced} onClick={()=>{fixed.current=current.current;jump.current=null;pause(!paused)}}>{reduced?'Reduced motion':paused?'Resume motion':'Pause motion'}</button></div>
    {free&&<p className="rf-free-hint">Drag to orbit · pinch or scroll to zoom</p>}
-   <footer className="rf-controller"><span className="rf-demo">DESIGN STUDY · NOT FOR SALE</span><nav aria-label="Product story scenes">{['First look','Every angle','Closer'].map((v,i)=><button key={v} className={scene===i?'active':''} aria-current={scene===i?'step':undefined} onClick={()=>go(i)}><b>0{i+1}</b><span>{v}</span></button>)}</nav><button className="rf-next-scene" onClick={()=>go((scene+1)%3)}>{scene===2?'Replay':'Next scene'} <span>→</span></button></footer>
+   <footer className="rf-controller"><span className="rf-demo">DESIGN STUDY · NOT FOR SALE</span><nav aria-label="Product story scenes">{['First look','Every angle','Closer'].map((v,i)=><button key={v} className={scene===i?'active':''} aria-current={scene===i?'step':undefined} onClick={()=>go(i)}><b>0{i+1}</b><span>{v}</span></button>)}</nav><span className="rf-scroll-cue">{reduced?'Choose a view above':paused?'Motion paused':'Scroll to explore ↓'}</span></footer>
   </section></div>
   <section className="rf-listing"><div><span className="rf-eyebrow">THE LISTING / DEMO DATA</span><h2>{item.title}</h2><p>{item.price} <small>Illustrative price</small></p></div><div><p>{item.blurb}</p><p>Listed by {item.seller}. {item.kind}.</p><p className="rf-caveat">This antique camera body is a cropped and optimized Khronos CC0 sample by Maximillan Kamps / UX3D. It is not the exact SLR in the listing photo. Dummy listing only; nothing is for sale and ordering is not enabled.</p><Link to="/">Back to the shelf ↗</Link></div></section>
   {photo&&<dialog ref={dialog} className="rf-photo-dialog" aria-label="Original listing photograph" onCancel={()=>setPhoto(false)}><button onClick={()=>setPhoto(false)} autoFocus>Close photo ×</button><img src={item.img} alt="Photo for the dummy Volt 35mm SLR listing"/><p>Original dummy listing photo. The 3D camera is a different sample.</p></dialog>}
