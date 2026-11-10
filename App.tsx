@@ -8,7 +8,6 @@ const AccountPage=React.lazy(()=>import('./AccountPage').then(m=>({default:m.Acc
 const ArtworkPage=React.lazy(()=>import('./PublicPages').then(m=>({default:m.ArtworkPage})));
 const CheckoutPage=React.lazy(()=>import('./CheckoutPage').then(m=>({default:m.CheckoutPage})));
 const OrderPayPage=React.lazy(()=>import('./OrderPayPage').then(m=>({default:m.OrderPayPage})));
-const PaymentPreview=React.lazy(()=>import('./PaymentPreview').then(m=>({default:m.PaymentPreview})));
 const ArtistPage=React.lazy(()=>import('./PublicPages').then(m=>({default:m.ArtistPage})));
 import {slugFor} from './publicSlug';
 import {heroWide,artEmber,artGlitch,artFigure,artVessel,artContour,artCollage} from './artwork';
@@ -434,5 +433,5 @@ export function App(){
  const loading=<div style={{background:'#0b0b0c',color:'#efeee8',minHeight:'100vh',padding:32}} role="status">Opening your space...</div>;
  const account=<React.Suspense fallback={loading}><AccountPage onGuest={continueAsGuest}/></React.Suspense>;
  const entry=checking?loading:(signedIn||guest?<Gallery signedIn={signedIn}/>:account);
- return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/order-history" element={<React.Suspense fallback={loading}><OrderHistory/></React.Suspense>}/><Route path="/orders" element={<React.Suspense fallback={loading}><MyOrders/></React.Suspense>}/><Route path="/orders/:id/pay" element={<React.Suspense fallback={loading}><OrderPayPage/></React.Suspense>}/><Route path="/resale/:slug" element={<React.Suspense fallback={loading}><ResaleItemPage/></React.Suspense>}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/><Route path="/artwork/:slug" element={<React.Suspense fallback={loading}><ArtworkPage/></React.Suspense>}/><Route path="/artist/:slug" element={<React.Suspense fallback={loading}><ArtistPage/></React.Suspense>}/><Route path="/buy/:slug" element={<React.Suspense fallback={loading}><CheckoutPage/></React.Suspense>}/><Route path="/pay-preview" element={<React.Suspense fallback={loading}><PaymentPreview/></React.Suspense>}/></Routes>;
-}
+ return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/order-history" element={<React.Suspense fallback={loading}><OrderHistory/></React.Suspense>}/><Route path="/orders" element={<React.Suspense fallback={loading}><MyOrders/></React.Suspense>}/><Route path="/orders/:id/pay" element={<React.Suspense fallback={loading}><OrderPayPage/></React.Suspense>}/><Route path="/resale/:slug" element={<React.Suspense fallback={loading}><ResaleItemPage/></React.Suspense>}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/><Route path="/artwork/:slug" element={<React.Suspense fallback={loading}><ArtworkPage/></React.Suspense>}/><Route path="/artist/:slug" element={<React.Suspense fallback={loading}><ArtistPage/></React.Suspense>}/><Route path="/buy/:slug" element={<React.Suspense fallback={loading}><CheckoutPage/></React.Suspense>}/></Routes>;
+        }
