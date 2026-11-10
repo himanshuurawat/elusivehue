@@ -12,6 +12,7 @@ const ArtistPage=React.lazy(()=>import('./PublicPages').then(m=>({default:m.Arti
 import {slugFor} from './publicSlug';
 import {heroWide,artEmber,artGlitch,artFigure,artVessel,artContour,artCollage} from './artwork';
 import {RESALE_ITEMS} from './resale-items';
+import {revealTheme} from './theme-reveal';
 const DOT = '\u00B7';
 const RU = '\u20B9';
 
@@ -369,7 +370,7 @@ function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn
             <button className="brand-button" type="button" onClick={() => jump('gallery-top')} aria-label="Elusive Hue home"><AnimatedWordmark /></button>
             <button type="button" onClick={() => jump('collection')}>Collection</button>
             <button type="button" onClick={() => jump('secondhand')}>Resale</button>
-            <a href={signedIn?"#/account":"#/account?mode=signup"} className="account-nav-link">{signedIn?'Account':'Sign up'}</a><button type="button" className="themebtn" onClick={() => setAlt(!alt)} aria-pressed={alt}>{alt ? 'Dark' : 'Light'}</button>
+            <a href={signedIn?"#/account":"#/account?mode=signup"} className="account-nav-link">{signedIn?'Account':'Sign up'}</a><button type="button" className="themebtn" onClick={e => revealTheme(e.currentTarget, () => setAlt(a => !a))} aria-pressed={alt}>{alt ? 'Dark' : 'Light'}</button>
         </nav>
         <header className="g-hero" id="gallery-top">
             <span className="vert rise d3">Midnight Gallery {DOT} A different perspective</span>
@@ -434,4 +435,4 @@ export function App(){
  const account=<React.Suspense fallback={loading}><AccountPage onGuest={continueAsGuest}/></React.Suspense>;
  const entry=checking?loading:(signedIn||guest?<Gallery signedIn={signedIn}/>:account);
  return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/order-history" element={<React.Suspense fallback={loading}><OrderHistory/></React.Suspense>}/><Route path="/orders" element={<React.Suspense fallback={loading}><MyOrders/></React.Suspense>}/><Route path="/orders/:id/pay" element={<React.Suspense fallback={loading}><OrderPayPage/></React.Suspense>}/><Route path="/resale/:slug" element={<React.Suspense fallback={loading}><ResaleItemPage/></React.Suspense>}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/><Route path="/artwork/:slug" element={<React.Suspense fallback={loading}><ArtworkPage/></React.Suspense>}/><Route path="/artist/:slug" element={<React.Suspense fallback={loading}><ArtistPage/></React.Suspense>}/><Route path="/buy/:slug" element={<React.Suspense fallback={loading}><CheckoutPage/></React.Suspense>}/></Routes>;
-        }
+}
