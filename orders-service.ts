@@ -10,7 +10,8 @@ import {signedInUserId, type Offer} from './offers-service';
 
 export type DeliveryState = 'none' | 'dispatched' | 'delivered';
 
-export type OrderStatus = 'pending' | 'confirmed' | 'declined' | 'withdrawn';
+export type OrderStatus = 'pending' | 'confirmed' | 'declined' | 'withdrawn' | 'cancelled';
+export type RefundState = 'none' | 'requested' | 'sent' | 'received' | 'not_received';
 
 export type MyOrderRequest = {
   id: string;
@@ -33,6 +34,9 @@ export type MyOrderRequest = {
   courier: string;
   tracking_id: string;
   tracking_url: string;
+  refund_state: RefundState;
+  refund_upi: string;
+  cancelled_at: string | null;
 };
 
 export type ArtistOrderRequest = {
@@ -54,6 +58,9 @@ export type ArtistOrderRequest = {
   courier: string;
   tracking_id: string;
   tracking_url: string;
+  refund_state: RefundState;
+  refund_upi: string;
+  cancelled_at: string | null;
 };
 
 export type OrderDetails = {name: string; phone: string; address: string; pin: string; email: string};
@@ -124,12 +131,39 @@ export async function markDelivered(client: SupabaseClient, requestId: string): 
   fail(error);
 }
 
+/* Cancellation before dispatch (backend/009_cancel_refund.sql). The refund is sent by the
+   artist from their own UPI app; the site only records what each side says. */
+export async function cancelOrder(client: SupabaseClient, requestId: string, refundUpi: string): Promise<{status: OrderStatus; refund_state: RefundState}> {
+  const {data, error} = await client.rpc('buyer_cancel_order', {p_request: requestId, p_refund_upi: refundUpi});
+  fail(error);
+  return data as {status: OrderStatus; refund_state: RefundState};
+}
+
+export async function markRefundSent(client: SupabaseClient, requestId: string): Promise<void> {
+  const {error} = await client.rpc('artist_refund_sent', {p_request: requestId});
+  fail(error);
+}
+
+export async function respondRefund(client: SupabaseClient, requestId: string, action: 'received' | 'not_received'): Promise<void> {
+  const {error} = await client.rpc('buyer_refund_response', {p_request: requestId, p_action: action});
+  fail(error);
+}
+
+export const UPI_ID = /^[A-Za-z0-9._-]{2,64}@[A-Za-z][A-Za-z0-9.-]{1,40}$/;
+
 /*
- * Badge text for an order. The stored order status stays confirmed, declined
- * or withdrawn; once a confirmed order ships, the badge shows how far it got.
+ * Badge text for an order. The stored order status stays confirmed, declined,
+ * withdrawn or cancelled; once a confirmed order ships, or a cancelled one is
+ * being refunded, the badge shows how far it got.
  */
-export function orderBadge(status: string, deliveryState?: string): string {
+export function orderBadge(status: string, deliveryState?: string, refundState?: string): string {
   if (status === 'confirmed' && deliveryState === 'delivered') return 'Delivered';
   if (status === 'confirmed' && deliveryState === 'dispatched') return 'Dispatched';
+  if (status === 'cancelled') {
+    if (refundState === 'requested') return 'Cancel requested';
+    if (refundState === 'sent') return 'Refund sent';
+    if (refundState === 'received') return 'Refunded';
+    if (refundState === 'not_received') return 'Refund issue';
+  }
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
