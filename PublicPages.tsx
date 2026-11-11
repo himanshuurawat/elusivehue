@@ -208,7 +208,7 @@ function LiquidGlassFilter() {
  * or fake progress. Original hand-rolled implementation, no third-party
  * code.
  */
-function DottedOrb({size, label}: {size: number; label: string}) {
+export function DottedOrb({size, label}: {size: number; label: string}) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -290,6 +290,22 @@ function LoadingWell({ready, size, label}: {ready: boolean; size: number; label:
       <DottedOrb size={size} label={label} />
     </div>
   );
+}
+
+/*
+ * WaitOrb: the DottedOrb for a wait that has actually started. It stays
+ * invisible for the first `delay` ms, so a fast response never flashes a
+ * loader and no artificial delay is added. `inline` is the small version
+ * used inside buttons.
+ */
+export function WaitOrb({label, size = 40, delay = 280, inline = false}: {label: string; size?: number; delay?: number; inline?: boolean}) {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setShow(true), delay);
+    return () => clearTimeout(id);
+  }, [delay]);
+  if (!show) return inline ? null : <span className="sr-only" role="status">{label}</span>;
+  return <span className={`wait-orb${inline ? ' wait-orb-inline' : ''}`}><DottedOrb size={size} label={label} /></span>;
 }
 
 function FollowButton({

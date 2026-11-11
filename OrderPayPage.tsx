@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
+import {WaitOrb} from './PublicPages';
 import {Link, useParams} from 'react-router-dom';
 import {configuredAccountClient} from './account-service';
 import {artworkParam, type SharedArtwork} from './public-service';
@@ -91,7 +92,7 @@ export function OrderPayPage() {
     <section className="workspace-body">
       <p className="kicker">Payment for this order</p>
       <h1 className="display">Pay the artist.</h1>
-      {state === 'loading' && <p role="status">Opening your order...</p>}
+      {state === 'loading' && <WaitOrb label="Opening your order"/>}
       {state === 'denied' && <div className="workspace-empty"><p>This payment page is only for an order of yours that the artist has accepted.</p><Link to="/orders">Back to my orders ↗</Link></div>}
       {state === 'error' && <p role="alert">{message}</p>}
       {state === 'ready' && order && <>
