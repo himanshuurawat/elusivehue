@@ -23,3 +23,7 @@ Status: implemented. Migrations 009, 010 and 011 were applied once each to the l
 ## Missing refund help
 
 After a buyer marks a refund as not received, the buyer screen shows himanshurawathiki@gmail.com as a help contact (user approved this contact for site support, 2026-11-11). Elusive Hue does not send the refund and makes no promise about a result or a time. There is no automatic action when an artist ignores a refund. Never ask for a UPI PIN or OTP.
+
+## Preview hosting
+
+This branch is built as a Cloudflare Pages preview (branch alias refund-cancel-preview). The preview uses the same Supabase project as production. Not merged to main until the user approves release.
