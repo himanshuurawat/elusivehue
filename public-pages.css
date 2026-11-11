@@ -779,3 +779,11 @@ a.pub-buy{color:#171b19}
 .pub-offer-ghost{min-height:44px;padding:10px 18px;border-radius:25px;border:1px solid #ffffff40;background:transparent;color:#ece8df;font:11px var(--text);cursor:pointer;margin-top:18px}
 .pub-offer-ghost:disabled{opacity:.4}
 .pub-offer-hint{font:11px/1.6 var(--text);color:#b9ad97;margin:0}
+
+.wait-orb{display:grid;place-items:center;padding:18px 0;animation:wait-orb-in .35s ease both}
+.wait-orb-inline{display:inline-grid;padding:0;margin-right:8px;vertical-align:middle}
+.wait-orb-inline .pub-orb-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@keyframes wait-orb-in{from{opacity:0}to{opacity:1}}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion: reduce){.wait-orb{animation:none}}
+.profile-save .wait-orb-inline canvas{filter:brightness(.12) saturate(0)}

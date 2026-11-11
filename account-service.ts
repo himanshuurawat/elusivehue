@@ -22,7 +22,7 @@ export function authReturnUrl(recovery=false):string {
 export type Profile={id:string;username:string|null;display_name:string;bio:string};
 export type ProfileFields=Pick<Profile,'username'|'display_name'|'bio'>;
 export type ArtworkFields={title:string;medium:string;format:'Physical'|'Digital';size_class:'Small'|'Medium'|'Large';width:number;height:number;unit:'cm'|'px';asking_price_inr:number;description:string;image_path:string};
-export type Artwork=ArtworkFields & {id:string;owner_id:string;status:'draft'|'published';for_sale:boolean;created_at:string;updated_at:string};
+export type Artwork=ArtworkFields & {id:string;owner_id:string;status:'draft'|'published';for_sale:boolean;delivery_fee_inr:number;created_at:string;updated_at:string};
 export function cleanProfile(p:ProfileFields):ProfileFields {
  const username=(p.username||'').trim();
  if(!/^[a-zA-Z0-9_]{3,24}$/.test(username))throw new Error('Use 3-24 letters, numbers or underscores for your username.');
@@ -61,6 +61,11 @@ export function accountRepository(client:SupabaseClient){
   async myArtworks(){const id=await owner();const {data,error}=await client.from('artworks').select('*').eq('owner_id',id).order('created_at',{ascending:false}).limit(50);fail(error);return data as Artwork[];},
   async draft(fields:ArtworkFields){const id=await owner(),value=checkArtwork(fields,id);const {data,error}=await client.from('artworks').insert({...value,owner_id:id,status:'draft'}).select().single();fail(error);return data as Artwork;},
   async edit(id:string,fields:ArtworkFields){const uid=await owner(),value=checkArtwork(fields,uid);const {data,error}=await client.from('artworks').update(value).eq('id',id).eq('owner_id',uid).select().single();fail(error);return data as Artwork;},
+  async setDeliveryFee(id:string,fee:number){
+   const uid=await owner();
+   if(!Number.isInteger(fee)||fee<0||fee>100000)throw new Error('Use a whole-rupee delivery fee from 0 to 100,000.');
+   const {data,error}=await client.from('artworks').update({delivery_fee_inr:fee}).eq('id',id).eq('owner_id',uid).select().single();fail(error);return data as Artwork;
+  },
   async setSelling(id:string,description:string,forSale:boolean){
    const uid=await owner(),value=(description||'').trim();
    if(value.length>1000)throw new Error('Keep the description within 1,000 characters.');

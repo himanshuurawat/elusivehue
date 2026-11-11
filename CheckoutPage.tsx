@@ -100,7 +100,8 @@ export function CheckoutPage() {
   const {work, artist} = bundle;
   const name = artist.display_name || (artist.username ? '@' + artist.username : 'Artist');
   const price = offer ? offer.amount_inr : work.asking_price_inr;
-  const money = '₹' + price.toLocaleString('en-IN');
+  const fee = work.format === 'Physical' ? (work.delivery_fee_inr ?? 0) : 0;
+  const money = '₹' + (price + fee).toLocaleString('en-IN');
   const physical = work.format === 'Physical';
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm({...form, [k]: e.target.value});
@@ -144,9 +145,9 @@ export function CheckoutPage() {
             </h1>
             <p className="pub-story">
               {active.status === 'pending'
-                ? `${name} will confirm or decline your request for ${work.title} at ₹${active.amount_inr.toLocaleString('en-IN')}. They see your first name and area now, and your full contact details only after they confirm.`
+                ? `${name} will confirm or decline your request for ${work.title} at ₹${(active.amount_inr + (active.delivery_fee_inr ?? 0)).toLocaleString('en-IN')}. They see your first name and area now, and your full contact details only after they confirm.`
                 : active.status === 'confirmed'
-                  ? `${name} now has your contact details for ${work.title} at ₹${active.amount_inr.toLocaleString('en-IN')}. They will reach out about the next step. Nothing was charged.`
+                  ? `${name} now has your contact details for ${work.title} at ₹${(active.amount_inr + (active.delivery_fee_inr ?? 0)).toLocaleString('en-IN')}. They will reach out about the next step. Nothing was charged.`
                   : `${name} could not take this request. Nothing was charged.`}
             </p>
             {active.status === 'pending' ? (
@@ -202,8 +203,10 @@ export function CheckoutPage() {
                 </ol>
                 <p className="pub-checkout-price">
                   <span>{offer ? 'Agreed price' : 'Asking price'}</span>
-                  <strong>{money}</strong>
+                  <strong>{'₹' + price.toLocaleString('en-IN')}</strong>
                 </p>
+                {physical ? <p className="pub-checkout-price"><span>Delivery (set by the artist)</span><strong>{fee > 0 ? '₹' + fee.toLocaleString('en-IN') : 'No separate fee'}</strong></p> : null}
+                {physical ? <p className="pub-checkout-price"><span>Total you pay the artist</span><strong>{money}</strong></p> : null}
                 {needsSignIn ? (
                   <p className="pub-note">
                     <Link className="pub-inline-link" to="/account">Sign in</Link> to send an order request.
@@ -240,7 +243,7 @@ export function CheckoutPage() {
                     </p>
                     {error ? <p className="pub-offer-error" role="alert">{error}</p> : null}
                     <button type="submit" disabled={busy}>
-                      {busy ? 'Sending...' : `Send order request at ${money} ↗`}
+                      {busy ? 'Sending...' : `Send order request, total ${money} ↗`}
                     </button>
                   </form>
                 )}
