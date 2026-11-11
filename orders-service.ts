@@ -8,6 +8,8 @@ import {signedInUserId, type Offer} from './offers-service';
  * buyer's phone and address reach the artist only after they confirm.
  */
 
+export type DeliveryState = 'none' | 'dispatched' | 'delivered';
+
 export type OrderStatus = 'pending' | 'confirmed' | 'declined' | 'withdrawn';
 
 export type MyOrderRequest = {
@@ -26,6 +28,11 @@ export type MyOrderRequest = {
   qr_path_snapshot: string;
   upi_id_snapshot: string;
   payee_name_snapshot: string;
+  delivery_fee_inr: number;
+  delivery_state: DeliveryState;
+  courier: string;
+  tracking_id: string;
+  tracking_url: string;
 };
 
 export type ArtistOrderRequest = {
@@ -42,6 +49,11 @@ export type ArtistOrderRequest = {
   delivery_address: string | null;
   delivery_pin: string | null;
   buyer_email: string | null;
+  delivery_fee_inr: number;
+  delivery_state: DeliveryState;
+  courier: string;
+  tracking_id: string;
+  tracking_url: string;
 };
 
 export type OrderDetails = {name: string; phone: string; address: string; pin: string; email: string};
@@ -97,5 +109,17 @@ export async function artistOrderRequests(client: SupabaseClient, artworkIds: st
 
 export async function respondOrderRequest(client: SupabaseClient, requestId: string, action: 'confirm' | 'decline'): Promise<void> {
   const {error} = await client.rpc('respond_order_request', {p_request: requestId, p_action: action});
+  fail(error);
+}
+
+/* Artist-managed delivery: the artist types the courier and tracking they arranged
+   themselves; the buyer marks it received. Nothing here is verified by the site. */
+export async function markDispatched(client: SupabaseClient, requestId: string, courier: string, trackingId: string, trackingUrl: string): Promise<void> {
+  const {error} = await client.rpc('artist_mark_dispatched', {p_request: requestId, p_courier: courier, p_tracking_id: trackingId, p_tracking_url: trackingUrl});
+  fail(error);
+}
+
+export async function markDelivered(client: SupabaseClient, requestId: string): Promise<void> {
+  const {error} = await client.rpc('buyer_mark_delivered', {p_request: requestId});
   fail(error);
 }

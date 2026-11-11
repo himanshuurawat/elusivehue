@@ -4,6 +4,7 @@ import {accountRepository, configuredAccountClient, type Artwork} from './accoun
 import {artworkParam, type SharedArtwork} from './public-service';
 import {artistOrderRequests, type ArtistOrderRequest, type MyOrderRequest} from './orders-service';
 import {respondOrderPayment} from './payment-service';
+import {ArtistDelivery, BuyerDelivery} from './DeliveryParts';
 import './artwork-studio.css';
 
 /*
@@ -100,8 +101,9 @@ export function MyOrders() {
           <p className="selling-kicker">Requests you sent</p>
           {sent === null ? <p role="status">Loading requests...</p> : sent.length === 0 ? <p>You have not sent any order requests yet.</p> : <ul>{sent.map(({req, work}) => <li className="offer-row" key={req.id}>
             <div className="offer-row-top"><strong>{work ? work.title : 'Artwork no longer shared'}</strong><span className={`offer-status offer-status-${req.status}`}>{label(req.status)}</span></div>
-            <p className="offer-note">{rupees(req.amount_inr)}{req.status === 'pending' ? ' · waiting for the artist' : req.status === 'confirmed' ? ' · confirmed by the artist' : ''}</p>
+            <p className="offer-note">{rupees(req.amount_inr + req.delivery_fee_inr)}{req.delivery_fee_inr > 0 ? ` (${rupees(req.amount_inr)} + ${rupees(req.delivery_fee_inr)} delivery)` : ''}{req.status === 'pending' ? ' · waiting for the artist' : req.status === 'confirmed' ? ' · confirmed by the artist' : ''}</p>
             {req.status === 'confirmed' && (req.qr_path_snapshot || req.upi_id_snapshot) && <p className="offer-time">{req.payment_state === 'received' ? 'Payment received by the artist · ' : req.payment_state === 'buyer_marked' ? 'Artist is checking your payment · ' : req.payment_state === 'missing' ? 'Artist could not find the payment yet · ' : ''}<Link to={`/orders/${req.id}/pay`}>Pay artist ↗</Link></p>}
+            {req.status === 'confirmed' && <BuyerDelivery client={client!} order={req} onChanged={s => setSent(list => (list ?? []).map(r => r.req.id === req.id ? {...r, req: {...r.req, delivery_state: s}} : r))}/>}
             <p className="offer-time">{new Date(req.created_at).toLocaleDateString('en-IN')}{work ? <> · <Link to={`/artwork/${artworkParam(work)}`}>Open artwork ↗</Link></> : null}</p>
           </li>)}</ul>}
         </section>
@@ -109,11 +111,12 @@ export function MyOrders() {
           <p className="selling-kicker">Requests for your art</p>
           {received === null ? <p role="status">Loading requests...</p> : received.length === 0 ? <p>No one has sent a request for your artworks yet.</p> : <ul>{received.map(({req, title}) => <li className="offer-row" key={req.id}>
             <div className="offer-row-top"><strong>{title}</strong><span className={`offer-status offer-status-${req.status}`}>{label(req.status)}</span></div>
-            <p className="offer-note">{rupees(req.amount_inr)} · {req.first_name}{req.area ? ` · area ${req.area}` : ''}{req.status === 'confirmed' ? '. Contact details are on the artwork.' : '. Full contact details appear after you confirm.'}</p>
-            {req.status === 'confirmed' && req.payment_state === 'buyer_marked' && <p className="offer-note"><strong>{req.first_name} says they paid {rupees(req.amount_inr)}.</strong> Check your own UPI app - a screenshot is never proof.</p>}
+            <p className="offer-note">{rupees(req.amount_inr + req.delivery_fee_inr)}{req.delivery_fee_inr > 0 ? ` (${rupees(req.amount_inr)} + ${rupees(req.delivery_fee_inr)} delivery)` : ''} · {req.first_name}{req.area ? ` · area ${req.area}` : ''}{req.status === 'confirmed' ? '. Contact details are on the artwork.' : '. Full contact details appear after you confirm.'}</p>
+            {req.status === 'confirmed' && req.payment_state === 'buyer_marked' && <p className="offer-note"><strong>{req.first_name} says they paid {rupees(req.amount_inr + req.delivery_fee_inr)}.</strong> Check your own UPI app - a screenshot is never proof.</p>}
             {req.status === 'confirmed' && req.payment_state === 'buyer_marked' && <p className="offer-time"><PaymentAnswer client={client!} requestId={req.id} onDone={a => setReceived(list => (list ?? []).map(r => r.req.id === req.id ? {...r, req: {...r.req, payment_state: a}} : r))}/></p>}
-            {req.status === 'confirmed' && req.payment_state === 'received' && <p className="offer-note">You confirmed receiving {rupees(req.amount_inr)} from your own app.</p>}
+            {req.status === 'confirmed' && req.payment_state === 'received' && <p className="offer-note">You confirmed receiving {rupees(req.amount_inr + req.delivery_fee_inr)} from your own app.</p>}
             {req.status === 'confirmed' && req.payment_state === 'missing' && <p className="offer-note">You could not find this payment yet. It returns here when the buyer marks it again.</p>}
+            {req.status === 'confirmed' && <ArtistDelivery client={client!} order={req} onChanged={v => setReceived(list => (list ?? []).map(r => r.req.id === req.id ? {...r, req: {...r.req, ...v, delivery_state: 'dispatched'}} : r))}/>}
             <p className="offer-time">{new Date(req.created_at).toLocaleDateString('en-IN')}{req.status === 'pending' ? <> · <Link to="/my-artworks">Answer in My artworks ↗</Link></> : req.status === 'confirmed' ? <> · <Link to="/my-artworks">Open in My artworks ↗</Link></> : null}</p>
           </li>)}</ul>}
         </section>

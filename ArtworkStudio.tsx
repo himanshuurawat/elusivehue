@@ -63,7 +63,8 @@ function OrderRequestRow({client,req,onChanged}:{client:NonNullable<ReturnType<t
  const answer=async(action:'confirm'|'decline')=>{if(busy)return;setBusy(true);setMessage('');try{await respondOrderRequest(client,req.id,action);onChanged();}catch(e){setMessage(e instanceof Error?e.message:'Could not answer this request. Retry when connected.');}finally{setBusy(false);}};
  const confirmed=req.status==='confirmed';
  return <li className="offer-row">
-  <div className="offer-row-top"><strong>₹{req.amount_inr.toLocaleString('en-IN')}</strong><span className={`offer-status offer-status-${req.status}`}>{req.status[0].toUpperCase()+req.status.slice(1)}</span></div>
+  <div className="offer-row-top"><strong>₹{(req.amount_inr+req.delivery_fee_inr).toLocaleString('en-IN')}</strong><span className={`offer-status offer-status-${req.status}`}>{req.status[0].toUpperCase()+req.status.slice(1)}</span></div>
+  {req.delivery_fee_inr>0&&<p className="offer-time">₹{req.amount_inr.toLocaleString('en-IN')} + ₹{req.delivery_fee_inr.toLocaleString('en-IN')} delivery</p>}
   {confirmed?<p className="offer-note">{req.buyer_name}{req.buyer_phone?` · ${req.buyer_phone}`:''}{req.buyer_email?` · ${req.buyer_email}`:''}{req.delivery_address?<><br/>{req.delivery_address}{req.delivery_pin?` · ${req.delivery_pin}`:''}</>:null}</p>:<p className="offer-note">{req.first_name}{req.area?` · area ${req.area}`:''}. Full contact details appear after you confirm.</p>}
   <p className="offer-time">{new Date(req.created_at).toLocaleDateString('en-IN')}</p>
   {req.status==='pending'&&<div className="offer-respond"><div className="offer-respond-actions"><button type="button" disabled={busy} onClick={()=>void answer('confirm')}>Confirm</button><button type="button" disabled={busy} onClick={()=>void answer('decline')}>Decline</button></div></div>}
@@ -76,14 +77,17 @@ function SellingPanel({client,artwork,onChanged}:{client:NonNullable<ReturnType<
  const [offers,setOffers]=useState<Offer[]|null>(null),[orders,setOrders]=useState<ArtistOrderRequest[]|null>(null);
  const loadOrders=async()=>{try{setOrders(await artistOrderRequests(client,[artwork.id]));}catch{setOrders([]);}};
  useEffect(()=>{if(artwork.status==='published')void loadOrders();},[client,artwork.id,artwork.status,artwork.updated_at]);
- const dirty=descr!==artwork.description||forSale!==artwork.for_sale;
+ const [fee,setFee]=useState(String(artwork.delivery_fee_inr??0));
+ const feeNum=/^\d{1,6}$/.test(fee)?Number(fee):NaN;
+ const dirty=descr!==artwork.description||forSale!==artwork.for_sale||(feeNum!==(artwork.delivery_fee_inr??0));
  const loadOffers=async()=>{try{setOffers(await offersForArtworks(client,[artwork.id]));}catch{setOffers([]);}};
  useEffect(()=>{if(artwork.status==='published')void loadOffers();},[client,artwork.id,artwork.status,artwork.updated_at]);
- const save=async()=>{if(busy||!dirty)return;setBusy(true);setMessage('');setSavedTick(false);try{await accountRepository(client).setSelling(artwork.id,descr,forSale);setSavedTick(true);onChanged();}catch(e){setMessage(e instanceof Error?e.message:'Could not save selling details. Retry when connected.');}finally{setBusy(false);}};
+ const save=async()=>{if(busy||!dirty)return;setBusy(true);setMessage('');setSavedTick(false);try{if(artwork.format==='Physical'&&Number.isNaN(feeNum))throw new Error('Use a whole-rupee delivery fee from 0 to 100,000.');if(descr!==artwork.description||forSale!==artwork.for_sale)await accountRepository(client).setSelling(artwork.id,descr,forSale);if(feeNum!==(artwork.delivery_fee_inr??0))await accountRepository(client).setDeliveryFee(artwork.id,feeNum);setSavedTick(true);onChanged();}catch(e){setMessage(e instanceof Error?e.message:'Could not save selling details. Retry when connected.');}finally{setBusy(false);}};
  return <section className="selling-panel" aria-label="Selling settings">
   <p className="selling-kicker">Selling</p>
   <label className="selling-descr">Description buyers read<textarea value={descr} onChange={e=>setDescr(e.target.value)} maxLength={1000} rows={3} disabled={busy} placeholder="A few words about the piece - story, materials, condition."/></label>
   <div className="selling-row"><button type="button" className={forSale?'selling-toggle on':'selling-toggle'} aria-pressed={forSale} disabled={busy} onClick={()=>setForSale(!forSale)}>{forSale?'Listed for sale':'Not for sale'}</button><p>{forSale?'Buyers see your price and can make offers. When you confirm an order, the buyer pays you directly by UPI.':'Your price stays a plan. Nothing is offered to buyers.'}</p></div>
+  {artwork.format==='Physical'&&<label className="selling-descr">Delivery fee (₹, you set it; 0 for none)<input value={fee} onChange={e=>setFee(e.target.value)} inputMode="numeric" maxLength={6} disabled={busy}/><small>Buyers see price + this fee as one total before they send a request. You book the courier yourself.</small></label>}
   {dirty&&<button type="button" className="selling-save" disabled={busy} onClick={()=>void save()}>{busy?'Saving...':'Save selling details ↗'}</button>}
   {savedTick&&!dirty&&<p role="status">Selling details saved.</p>}
   {message&&<p role="alert">{message}</p>}
