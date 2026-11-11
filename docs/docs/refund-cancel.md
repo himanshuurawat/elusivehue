@@ -1,6 +1,6 @@
 # Cancel and refund before dispatch (proposal, not live)
 
-Status: implemented on branch `refund-cancel-impl`. Migration `backend/009_cancel_refund.sql` is NOT applied. Wording in the UI is proposed, not final published terms.
+Status: implemented. Migrations 009, 010 and 011 were applied once each to the live Supabase project on 2026-11-11 with the user's approval (the 'PROPOSED, not applied' header comments inside the SQL files predate that and were left unchanged so the files match what was run). Wording in the UI is proposed, not final published terms.
 
 ## Implemented
 - Buyer can cancel a confirmed order before dispatch.
