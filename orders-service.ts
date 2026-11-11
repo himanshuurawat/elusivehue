@@ -123,3 +123,13 @@ export async function markDelivered(client: SupabaseClient, requestId: string): 
   const {error} = await client.rpc('buyer_mark_delivered', {p_request: requestId});
   fail(error);
 }
+
+/*
+ * Badge text for an order. The stored order status stays confirmed, declined
+ * or withdrawn; once a confirmed order ships, the badge shows how far it got.
+ */
+export function orderBadge(status: string, deliveryState?: string): string {
+  if (status === 'confirmed' && deliveryState === 'delivered') return 'Delivered';
+  if (status === 'confirmed' && deliveryState === 'dispatched') return 'Dispatched';
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
