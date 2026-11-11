@@ -38,3 +38,7 @@ User approved the Supabase delivery fields and rules on 2026-11-11. `backend/008
 - UI: checkout shows price + delivery = total before sending; pay page and My orders use the total; My orders shows one progress line with role-specific actions (artist: courier + tracking form; buyer: tracking + "I received it").
 - Not defined: refund and cancellation terms, auto-delivery or auto-expiry, courier integration, notification emails.
 - Known edge: an order cannot be dispatched until the artist confirms payment in the site, so an artist with no payment details added cannot mark dispatch.
+
+## Preview hosting
+
+This branch is built as a Cloudflare Pages preview (branch alias artist-delivery-preview.elusivehue.pages.dev). The preview uses the same Supabase project as production. Not merged to main and not released.
