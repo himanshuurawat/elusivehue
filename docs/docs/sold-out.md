@@ -7,3 +7,5 @@ An artist can mark a listed artwork as sold out by hand.
 - Orders already placed are not changed. The artist can still confirm, decline or refund them.
 - Marking available again reopens the artwork. There is no stock count and nothing is automatic.
 - Not decided: quantities or editions, automatic sold out when an order is confirmed, reservation while a request is pending.
+
+Preview: the branch sold-out-preview is hosted as a Cloudflare Pages preview for testing. Migration 012 is applied to the live Supabase project (2026-11-12, with the user's approval).
