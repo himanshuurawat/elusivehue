@@ -77,7 +77,7 @@ export function CheckoutPage() {
   if (!state.checked || !client) return <PublicLoading label="Opening checkout" />;
   const bundle = state.bundle;
 
-  if (!bundle || !bundle.work.for_sale) {
+  if (!bundle || !bundle.work.for_sale || bundle.work.sold_out) {
     return (
       <div className="pub-space">
         <PublicHeader />
@@ -86,10 +86,10 @@ export function CheckoutPage() {
             Checkout
           </p>
           <h1 className="pub-title pub-rise" style={rise('0.12s')}>
-            Not on the shelf.
+            {bundle?.work.sold_out ? 'Sold out.' : 'Not on the shelf.'}
           </h1>
           <p className="pub-note pub-rise" style={rise('0.2s')}>
-            This artwork is not listed for sale. <Link className="pub-inline-link" to="/gallery">Back to the gallery</Link>
+            {bundle?.work.sold_out ? 'The artist has no more of this piece right now.' : 'This artwork is not listed for sale.'} <Link className="pub-inline-link" to="/gallery">Back to the gallery</Link>
           </p>
         </main>
         <PublicFooter />

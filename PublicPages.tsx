@@ -647,7 +647,12 @@ function RealArtwork({bundle, photo, client}: {bundle: ArtworkBundle; photo: str
               {work.description}
             </p>
           ) : null}
-          {work.for_sale ? (
+          {work.for_sale && work.sold_out ? (
+            <p className="pub-soldout pub-rise" style={rise('0.44s')}>
+              <strong>Sold out</strong>
+              <span>{name.split(' ')[0]} has no more of this piece right now.</span>
+            </p>
+          ) : work.for_sale ? (
             <BuyOffer client={client} work={work} />
           ) : (
             <p className="pub-note pub-rise" style={rise('0.44s')}>
@@ -794,7 +799,7 @@ function RealWorkCard({work, url, delay}: {work: SharedArtwork; url: string; del
           {work.format} · {work.medium}
         </small>
       </span>
-      <span className="pub-work-price">₹{work.asking_price_inr.toLocaleString('en-IN')}</span>
+      <span className="pub-work-price">{work.for_sale && work.sold_out ? <em className="pub-soldout-tag">Sold out</em> : '₹' + work.asking_price_inr.toLocaleString('en-IN')}</span>
     </Link>
   );
 }

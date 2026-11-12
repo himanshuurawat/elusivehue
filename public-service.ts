@@ -23,6 +23,7 @@ export type SharedArtwork = {
   asking_price_inr: number;
   description: string;
   for_sale: boolean;
+  sold_out: boolean;
   delivery_fee_inr: number;
   image_path: string;
   created_at: string;
