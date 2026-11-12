@@ -923,3 +923,9 @@ body { background: #0a0909; }
     -webkit-mask-position: var(--ink-x) var(--ink-y); mask-position: var(--ink-x) var(--ink-y);
     -webkit-mask-size: 0 0; mask-size: 0 0;
 }
+
+.g-empty{padding:56px 0 24px;text-align:left;color:var(--muted,#9a9a94);max-width:520px}
+.g-empty .display{font-size:clamp(28px,5vw,40px);margin:0 0 10px;color:inherit}
+.g-empty p{margin:0 0 18px}
+.g-nophoto{width:100%;aspect-ratio:3/4;background:rgba(208,213,171,.06)}
+.g-more{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:36px 0 8px}.g-more button:disabled{opacity:.6;cursor:wait}
