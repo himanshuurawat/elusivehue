@@ -4,6 +4,7 @@ import {Link} from 'react-router-dom';
 import {configuredAccountClient,accountRepository,type Artwork} from './account-service';
 import {artworkParam} from './public-service';
 import {prepareArtworkPhoto,saveArtworkDraft,newDraftAttempt,discardUnconfirmedPhoto,ownArtworkPreviews,type DraftDetails} from './artwork-drafts';
+import {useFocusTarget} from './focus-target';
 import {offersForArtworks,respondOffer,type Offer} from './offers-service';
 import {artistOrderRequests,respondOrderRequest,type ArtistOrderRequest,orderBadge} from './orders-service';
 import './artwork-studio.css';
@@ -50,7 +51,7 @@ function OfferRow({client,offer,onChanged}:{client:NonNullable<ReturnType<typeof
  const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[counter,setCounter]=useState('');
  const open=offer.status==='pending'||offer.status==='countered';
  const respond=async(action:'accept'|'decline'|'counter')=>{if(busy)return;setBusy(true);setMessage('');try{await respondOffer(client,offer.id,action,action==='counter'?Number(counter):undefined);onChanged();}catch(e){setMessage(e instanceof Error?e.message:'Could not answer this offer. Retry when connected.');}finally{setBusy(false);}};
- return <li className="offer-row">
+ return <li className="offer-row" data-focus-id={offer.id}>
   <div className="offer-row-top"><strong>₹{offer.amount_inr.toLocaleString('en-IN')}</strong><span className={`offer-status offer-status-${offer.status}`}>{offer.status==='countered'&&offer.counter_amount_inr?`Countered ₹${offer.counter_amount_inr.toLocaleString('en-IN')}`:offer.status[0].toUpperCase()+offer.status.slice(1)}</span></div>
   {offer.note&&<p className="offer-note">{offer.note}</p>}
   <p className="offer-time">A buyer · {new Date(offer.created_at).toLocaleDateString('en-IN')}</p>
@@ -63,7 +64,7 @@ function OrderRequestRow({client,req,onChanged}:{client:NonNullable<ReturnType<t
  const [busy,setBusy]=useState(false),[message,setMessage]=useState('');
  const answer=async(action:'confirm'|'decline')=>{if(busy)return;setBusy(true);setMessage('');try{await respondOrderRequest(client,req.id,action);onChanged();}catch(e){setMessage(e instanceof Error?e.message:'Could not answer this request. Retry when connected.');}finally{setBusy(false);}};
  const confirmed=req.status==='confirmed';
- return <li className="offer-row">
+ return <li className="offer-row" data-focus-id={req.id}>
   <div className="offer-row-top"><strong>₹{(req.amount_inr+req.delivery_fee_inr).toLocaleString('en-IN')}</strong><span className={`offer-status offer-status-${req.status}`}>{orderBadge(req.status,req.delivery_state,req.refund_state,!!req.buyer_email)}</span></div>
   {req.delivery_fee_inr>0&&<p className="offer-time">₹{req.amount_inr.toLocaleString('en-IN')} + ₹{req.delivery_fee_inr.toLocaleString('en-IN')} delivery</p>}
   {confirmed?<p className="offer-note">{req.buyer_name}{req.buyer_phone?` · ${req.buyer_phone}`:''}{req.buyer_email?` · ${req.buyer_email}`:''}{req.delivery_address?<><br/>{req.delivery_address}{req.delivery_pin?` · ${req.delivery_pin}`:''}</>:null}</p>:<p className="offer-note">{req.first_name}{req.area?` · area ${req.area}`:''}. Full contact details appear after you confirm.</p>}
@@ -98,6 +99,7 @@ function SellingPanel({client,artwork,onChanged}:{client:NonNullable<ReturnType<
 }
 
 export function MyArtworks(){
+ useFocusTarget();
  const client=configuredAccountClient();
  const [session,setSession]=useState<boolean|null>(client?null:false),[items,setItems]=useState<Preview[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[notice,setNotice]=useState(''),[studio,setStudio]=useState(false);
  const mounted=useRef(true),request=useRef(0);

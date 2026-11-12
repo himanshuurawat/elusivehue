@@ -401,8 +401,32 @@ function RealCollection({filter,setFilter,signedIn}:{filter:string;setFilter:(v:
     </>;
 }
 
+function useAlertCount(enabled:boolean){
+    const [state,setState]=useState({count:0,complete:true});
+    React.useEffect(()=>{
+        if(!enabled){setState({count:0,complete:true});return;}
+        /* No polling: check when the page opens and when the tab regains focus, at most once every 5 minutes for focus. */
+        let live=true;let last=0;
+        const run=(force:boolean)=>{
+            if(document.visibilityState!=='visible')return;
+            if(!force&&Date.now()-last<300000)return;
+            last=Date.now();
+            Promise.all([import('./account-service'),import('./alerts-service')]).then(async([acc,al])=>{
+                const client=acc.configuredAccountClient();if(!client)return;
+                const r=await al.loadAlerts(client);if(live)setState({count:r.items.length,complete:r.complete});
+            }).catch(()=>{if(live)setState(s=>({...s,complete:false}));});
+        };
+        run(true);
+        const onFocus=()=>run(false);
+        document.addEventListener('visibilitychange',onFocus);window.addEventListener('focus',onFocus);
+        return()=>{live=false;document.removeEventListener('visibilitychange',onFocus);window.removeEventListener('focus',onFocus);};
+    },[enabled]);
+    return state;
+}
+
 function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn?:boolean }) {
     const [alt, setAlt] = useState(false);
+    const alertState=useAlertCount(signedIn);const alerts=alertState.count;const alertLabel=alerts>0?String(alerts)+(alertState.complete?'':'+'):'?';
     const [filter, setFilter] = useState('All works');
     const [listingOpen,setListingOpen]=useState(false);
     const galleryRoot = React.useRef<HTMLDivElement>(null);
@@ -416,7 +440,7 @@ function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn
             <button className="brand-button" type="button" onClick={() => jump('gallery-top')} aria-label="Elusive Hue home"><AnimatedWordmark /></button>
             <button type="button" onClick={() => jump('collection')}>Collection</button>
             <button type="button" onClick={() => jump('secondhand')}>Resale</button>
-            <a href={signedIn?"#/account":"#/account?mode=signup"} className="account-nav-link">{signedIn?'Account':'Sign up'}</a><button type="button" className="themebtn" onClick={e => revealTheme(e.currentTarget, () => setAlt(a => !a))} aria-pressed={alt}>{alt ? 'Dark' : 'Light'}</button>
+            {signedIn&&(alerts>0||!alertState.complete)&&<a href="#/orders" className="alert-nav-link" aria-label={alerts>0?`${alerts} ${alerts===1?'item needs':'items need'} your action${alertState.complete?'':', and some requests could not be checked'}`:'Some requests could not be checked. Open My orders'}>{alerts>0?'Needs you':'Check orders'} <span className="alert-count">{alertLabel}</span></a>}<a href={signedIn?"#/account":"#/account?mode=signup"} className="account-nav-link">{signedIn?'Account':'Sign up'}</a><button type="button" className="themebtn" onClick={e => revealTheme(e.currentTarget, () => setAlt(a => !a))} aria-pressed={alt}>{alt ? 'Dark' : 'Light'}</button>
         </nav>
         <header className="g-hero" id="gallery-top">
             <span className="vert rise d3">Midnight Gallery {DOT} A different perspective</span>

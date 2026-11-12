@@ -1,3 +1,4 @@
+import './demo-mode';
 import React, {useEffect} from 'react';
 import {createRoot} from 'react-dom/client';
 import {HashRouter, useLocation} from 'react-router-dom';
