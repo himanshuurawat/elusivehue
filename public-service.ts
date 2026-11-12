@@ -109,3 +109,26 @@ export async function sharedPhotoUrl(client: SupabaseClient, path: string): Prom
   fail(error);
   return data!.signedUrl;
 }
+
+export type GalleryItem = {work: SharedArtwork; photo: string};
+export type GalleryPage = {items: GalleryItem[]; total: number};
+
+/* Published artworks for the home gallery, newest first. The format filter
+ * and paging run in the query, so a filter covers every published work, not
+ * just the latest page. Same anonymous read policy as the artist page. */
+export async function loadPublishedGallery(
+  client: SupabaseClient,
+  opts: {format?: 'Physical' | 'Digital'; offset?: number; limit?: number} = {}
+): Promise<GalleryPage> {
+  const offset = opts.offset ?? 0;
+  const limit = opts.limit ?? 12;
+  let q = client.from('artworks').select('*', {count: 'exact'}).eq('status', 'published');
+  if (opts.format) q = q.eq('format', opts.format);
+  const {data, error, count} = await q.order('created_at', {ascending: false}).order('id').range(offset, offset + limit - 1);
+  fail(error);
+  const works = (data ?? []) as SharedArtwork[];
+  if (!works.length) return {items: [], total: count ?? 0};
+  const {data: signed} = await client.storage.from('artwork-photos').createSignedUrls(works.map(w => w.image_path), 3600);
+  const byPath = new Map((signed ?? []).map(s => [s.path ?? '', s.signedUrl]));
+  return {items: works.map(work => ({work, photo: byPath.get(work.image_path) ?? ''})), total: count ?? works.length};
+}

@@ -355,6 +355,52 @@ function useGalleryMotion(root: React.RefObject<HTMLDivElement | null>, changing
     }, [changing, root]);
 }
 
+type RealWork={id:string;title:string;format:string;medium:string;price:number;soldOut:boolean;param:string;photo:string};
+function RealCollection({filter,setFilter,signedIn}:{filter:string;setFilter:(v:string)=>void;signedIn:boolean}){
+    const [state,setState]=useState<{status:'loading'|'ready'|'error';items:RealWork[];total:number;more:boolean}>({status:'loading',items:[],total:0,more:false});
+    const [anyWork,setAnyWork]=useState<boolean|null>(null);
+    const format=filter==='Physical'||filter==='Digital'?filter:undefined;
+    const fetchPage=React.useCallback(async(offset:number)=>{
+        const [acc,pub]=await Promise.all([import('./account-service'),import('./public-service')]);
+        const client=acc.configuredAccountClient();
+        if(!client)throw new Error('no client');
+        const page=await pub.loadPublishedGallery(client,{format,offset,limit:12});
+        return {total:page.total,items:page.items.map(r=>({id:r.work.id,title:r.work.title,format:r.work.format,medium:r.work.medium,price:r.work.asking_price_inr,soldOut:r.work.for_sale&&r.work.sold_out,param:pub.artworkParam(r.work),photo:r.photo}))};
+    },[format]);
+    React.useEffect(()=>{
+        let live=true;
+        setState(s=>({...s,status:'loading'}));
+        fetchPage(0).then(p=>{if(!live)return;if(!format)setAnyWork(p.total>0);setState({status:'ready',items:p.items,total:p.total,more:p.items.length<p.total});}).catch(()=>{if(live)setState({status:'error',items:[],total:0,more:false});});
+        return()=>{live=false;};
+    },[fetchPage,format]);
+    const [busy,setBusy]=useState(false);
+    const [moreFailed,setMoreFailed]=useState(false);
+    const showMore=async()=>{
+        setBusy(true);setMoreFailed(false);
+        try{const p=await fetchPage(state.items.length);setState(s=>{const items=[...s.items,...p.items.filter(n=>!s.items.some(o=>o.id===n.id))];return {...s,items,total:p.total,more:items.length<p.total};});}
+        catch{setMoreFailed(true);}
+        setBusy(false);
+    };
+    const shown=state.items.length;
+    const noun=filter==='Physical'?'physical':filter==='Digital'?'digital':'';
+    const count=state.status==='ready'?(state.total>shown?`Showing ${shown} of ${state.total}`:`${state.total} ${state.total===1?'piece':'pieces'}`):state.status==='loading'?'Loading':'';
+    const empty=state.status==='ready'&&state.total===0;
+    return <>
+        <div className="head scroll-reveal"><div><p className="kicker">01 / The collection</p><h2 className="display">Find your perspective.</h2></div><span className="meta" aria-live="polite">{count}</span></div>
+        <div className="collection-filter" aria-label="Filter artworks">{['All works','Physical','Digital'].map(value=><button type="button" key={value} aria-pressed={filter===value} onClick={()=>setFilter(value)}>{value}</button>)}</div>
+        {state.status==='ready'&&shown>0&&<div className="g-works">
+            {state.items.map((w,i)=><a className="g-card art-open" style={{"--card-delay":`${(i%2)*90}ms`} as React.CSSProperties} href={`#/artwork/${w.param}`} key={w.id} aria-label={`Open ${w.title}`}>
+                <div className="ph">{w.photo?<img src={w.photo} alt={w.title} loading="lazy"/>:<div className="g-nophoto" aria-hidden="true"/>}<span className="art-open-label">View artwork ↗</span></div>
+                <div className="row"><span className="t">{w.title}</span><span className="p">{w.soldOut?'Sold out':'₹'+w.price.toLocaleString('en-IN')}</span></div><div className="a">{w.format} {DOT} {w.medium}</div>
+            </a>)}
+        </div>}
+        {state.status==='ready'&&state.more&&<div className="g-more"><button type="button" className="gallery-cta" onClick={showMore} disabled={busy}>{busy?'Loading...':`Show more (${state.total-shown} left)`}</button>{moreFailed&&<p role="status">Could not load more. Please try again.</p>}</div>}
+        {state.status==='loading'&&<p className="g-empty" role="status">Opening the collection...</p>}
+        {state.status==='error'&&<p className="g-empty" role="status">The collection could not load. Please try again in a moment.</p>}
+        {empty&&<div className="g-empty" role="status"><p className="display">{format&&anyWork?`No ${noun} artwork yet.`:'No artwork here yet.'}</p><p>{format&&anyWork?'Try another filter.':'Published works from artists will appear here.'}</p>{!(format&&anyWork)&&(signedIn?<a className="gallery-cta" href="#/my-artworks">My artworks ↗</a>:<a className="gallery-cta" href="#/account?mode=signup">Sign up to share yours ↗</a>)}</div>}
+    </>;
+}
+
 function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn?:boolean }) {
     const [alt, setAlt] = useState(false);
     const [filter, setFilter] = useState('All works');
@@ -374,7 +420,7 @@ function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn
         </nav>
         <header className="g-hero" id="gallery-top">
             <span className="vert rise d3">Midnight Gallery {DOT} A different perspective</span>
-            <p className="kicker rise d1">Elusive Hue / Art marketplace concept</p>
+            <p className="kicker rise d1">Elusive Hue / Art marketplace</p>
             <h1 className="display rise d2">Own the<br /><span>original.</span></h1>
             <div className="hero-line" />
             <div className="g-hero-art">
@@ -388,14 +434,7 @@ function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn
             </div>
         </header>
         <section className="g-section" id="collection">
-            <div className="head scroll-reveal"><div><p className="kicker">01 / The collection</p><h2 className="display">Find your perspective.</h2></div><span className="meta" aria-live="polite">{visible.length} {visible.length === 1 ? 'piece' : 'pieces'} / illustrative collection</span></div>
-            <div className="collection-filter" aria-label="Filter artworks">{['All works','Physical','Digital'].map(value => <button type="button" key={value} aria-pressed={filter === value} onClick={() => setFilter(value)}>{value}</button>)}</div>
-            <div className="g-works">
-                {visible.map((w, i) => <button className="g-card art-open" style={{"--card-delay": `${(i % 2) * 90}ms`} as React.CSSProperties} type="button" key={w.title} onClick={() => setSelected(w)} aria-label={`Preview ${w.title}`}>
-                    <div className="ph"><img src={w.img} alt={`${w.title}, illustrative artwork`} loading="lazy" /><span className="art-open-label">View artwork ↗</span></div>
-                    <div className="row"><span className="t">{w.title}</span><span className="p">{w.price}</span></div><div className="a">{w.artist} {DOT} {w.kind}</div>
-                </button>)}
-            </div>
+            <RealCollection filter={filter} setFilter={setFilter} signedIn={signedIn} />
         </section>
         <section className="g-section listing-invite"><div><p className="kicker">For the artist</p><h2 className="display">Your work belongs here.</h2><p>{signedIn?'Save your photo and details as a private draft in your account.':'Explore a local listing preview. Sign in to save your own work.'}</p></div>{signedIn?<a className="gallery-cta" href="#/my-artworks">My artworks ↗</a>:<button type="button" className="gallery-cta" onClick={()=>setListingOpen(true)}>Try the listing preview ↗</button>}</section>
         <section className="g-section">
@@ -406,8 +445,8 @@ function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn
             </div></div>
         </section>
         <div id="secondhand"><ResaleShelf /></div>
-        <section className="g-section project-note"><p className="kicker">The idea behind Elusive Hue</p><h2 className="display">Room for art.<br />Room for stories.</h2><p>A planned home for physical artwork and digital editions, with a separate shelf for personal belongings. The two collections stay distinct.</p><details><summary>What works in this preview?</summary><p>Browse the artwork, filter physical and digital pieces, open full-image and detail-crop views, switch the theme and explore the layered scroll scene. Artwork content is illustrative. Email and Google accounts and editable profiles are available. Signed-in artists can save private artwork drafts in My artworks. Public listings, orders and payments are not available.</p></details></section>
-        <footer className="g-foot"><Wordmark /><a className="developer-credit" href="https://github.com/himanshuurawat" target="_blank" rel="noopener noreferrer">Developed by Himanshu Rawat <span aria-hidden="true">↗</span></a><nav aria-label="Legal"><a href="/privacy.html">Privacy policy</a><a href="/terms.html">Terms of use</a></nav><p className="meta">Midnight Gallery / selected direction. Frontend preview only. All artworks, artists, mediums, prices and resale items are dummy content. Nothing is for sale here.</p><button className="text-link" type="button" onClick={() => jump('gallery-top')}>Back to the top ↑</button></footer>
+        <section className="g-section project-note"><p className="kicker">The idea behind Elusive Hue</p><h2 className="display">Room for art.<br />Room for stories.</h2><p>A home for physical artwork and digital editions. A separate shelf for personal belongings is planned, and the two stay distinct.</p><details><summary>What works in this preview?</summary><p>The collection above shows works artists have published. Filter physical and digital pieces, switch the theme and explore the layered scroll scene. The closer-look piece and the second-hand shelf are illustrative samples. Email and Google accounts and editable profiles are available, and signed-in artists can manage their artworks in My artworks.</p></details></section>
+        <footer className="g-foot"><Wordmark /><a className="developer-credit" href="https://github.com/himanshuurawat" target="_blank" rel="noopener noreferrer">Developed by Himanshu Rawat <span aria-hidden="true">↗</span></a><nav aria-label="Legal"><a href="/privacy.html">Privacy policy</a><a href="/terms.html">Terms of use</a></nav><p className="meta">Midnight Gallery / selected direction. The collection shows works published by artists. The closer-look piece and the second-hand shelf are illustrative samples.</p><button className="text-link" type="button" onClick={() => jump('gallery-top')}>Back to the top ↑</button></footer>
         {listingOpen&&<ArtistListing onClose={()=>setListingOpen(false)}/>}
         <ArtworkPreview work={selected} onClose={() => setSelected(null)} />
     </div>;
