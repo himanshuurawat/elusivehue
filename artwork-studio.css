@@ -58,3 +58,13 @@
 .selling-descr input:focus{outline:1px solid #d5c5a7;outline-offset:3px}
 .selling-descr input:disabled{opacity:.5}
 .selling-descr small{font:11px/1.5 var(--text);color:#9d998f}
+
+.needs-you{border:1px solid rgba(208,213,171,.35);border-radius:14px;padding:16px 18px;margin:0 0 22px}
+.needs-you ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:10px}
+.needs-you li{line-height:1.45}
+.needs-role{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#d0d5ab;margin-right:6px}
+.needs-you a{color:#d0d5ab;white-space:nowrap}
+.focus-flash{animation:focus-flash 2.4s ease-out 1}
+@keyframes focus-flash{0%,60%{outline:2px solid #d0d5ab;outline-offset:6px}100%{outline:2px solid transparent;outline-offset:6px}}
+@media(prefers-reduced-motion:reduce){.focus-flash{animation:none;outline:2px solid #d0d5ab;outline-offset:6px}}
+.needs-you-warn{color:#d0d5ab;margin:0 0 14px}

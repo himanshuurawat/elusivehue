@@ -929,3 +929,6 @@ body { background: #0a0909; }
 .g-empty p{margin:0 0 18px}
 .g-nophoto{width:100%;aspect-ratio:3/4;background:rgba(208,213,171,.06)}
 .g-more{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:36px 0 8px}.g-more button:disabled{opacity:.6;cursor:wait}
+
+.alert-nav-link{display:inline-flex;align-items:center;gap:6px;color:#d0d5ab;text-decoration:none}
+.alert-count{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#d0d5ab;color:#0b0b0c;font-size:11px;line-height:18px;text-align:center;font-weight:600}
