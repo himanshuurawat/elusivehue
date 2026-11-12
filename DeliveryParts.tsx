@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {type SupabaseClient} from '@supabase/supabase-js';
-import {markDelivered, markDispatched, type DeliveryState} from './orders-service';
+import {markDelivered, markDispatched, isDigitalOrder, FILE_COURIER, FILE_TRACKING, type DeliveryState} from './orders-service';
 import './delivery-parts.css';
 
 /*
@@ -11,11 +11,12 @@ import './delivery-parts.css';
  */
 
 const STEPS = ['Accepted', 'Payment received', 'Dispatched', 'Delivered'];
+const FILE_STEPS = ['Accepted', 'Payment received', 'File sent', 'File received'];
 const COURIERS = ['India Post', 'DTDC', 'Delhivery', 'Blue Dart', 'Other'];
 const TRACK_ID = /^[A-Za-z0-9-]{6,30}$/;
 const safeLink = (v: string): string => { try {const u = new URL(v); return u.protocol === 'https:' ? u.href : '';} catch {return '';} };
 
-type Shape = {status: string; payment_state: string; delivery_state: DeliveryState};
+type Shape = {status: string; payment_state: string; delivery_state: DeliveryState; buyer_email?: string | null};
 
 export function deliveryStage(o: Shape): number {
   if (o.delivery_state === 'delivered') return 3;
@@ -27,7 +28,7 @@ export function OrderProgress({order}: {order: Shape}) {
   if (order.status !== 'confirmed') return null;
   const stage = deliveryStage(order);
   return <ol className="dl-track" style={{'--dl-fill': `${(stage / 3) * 100}%`} as React.CSSProperties} aria-label="Order progress">
-    {STEPS.map((s, i) => <li key={s} className={i < stage || (i === 3 && stage === 3) ? 'done' : i === stage ? 'now' : ''} aria-current={i === stage ? 'step' : undefined}><i aria-hidden="true"/><span>{s}</span></li>)}
+    {(isDigitalOrder(order) ? FILE_STEPS : STEPS).map((s, i) => <li key={s} className={i < stage || (i === 3 && stage === 3) ? 'done' : i === stage ? 'now' : ''} aria-current={i === stage ? 'step' : undefined}><i aria-hidden="true"/><span>{s}</span></li>)}
   </ol>;
 }
 
@@ -47,6 +48,15 @@ export function BuyerDelivery({client, order, onChanged}: {client: SupabaseClien
     catch (e) {setError(e instanceof Error ? e.message : 'Could not save this. Retry.');}
     finally {setBusy(false);}
   };
+  if (isDigitalOrder(order)) return <div className="dl-block">
+    <OrderProgress order={order}/>
+    {order.delivery_state === 'none' && <p className="offer-note">{order.payment_state === 'received' ? <>The artist will email your file to <strong>{order.buyer_email}</strong>. Check your inbox and spam folder.</> : 'The artist sends the file after they confirm your payment.'}</p>}
+    {order.delivery_state === 'dispatched' && <p className="offer-note">The artist says they emailed the file to your address, <strong>{order.buyer_email}</strong>.</p>}
+    {order.delivery_state === 'dispatched' && <p className="pay-actions"><button type="button" className="pay-primary" disabled={busy} onClick={() => void done()}>{busy ? 'Saving...' : 'I received the file'}</button></p>}
+    {order.delivery_state === 'delivered' && <p className="offer-note"><strong>You confirmed you received the file.</strong></p>}
+    <p className="offer-note dl-small">The artist emails the file. Elusive Hue does not store or send files and cannot check that you got it.</p>
+    {error && <p role="alert">{error}</p>}
+  </div>;
   return <div className="dl-block">
     <OrderProgress order={order}/>
     {order.delivery_state === 'none' && <p className="offer-note">{order.payment_state === 'received' ? 'The artist is packing your order. Tracking appears here once they send it.' : 'Delivery starts after the artist confirms your payment.'}</p>}
@@ -82,6 +92,26 @@ export function ArtistDelivery({client, order, onChanged}: {client: SupabaseClie
     } catch (e) {setError(e instanceof Error ? e.message : 'Could not save this. Retry.');}
     finally {setBusy(false);}
   };
+  if (isDigitalOrder(order)) {
+    const sendFile = async () => {
+      if (busy) return;
+      setBusy(true); setError('');
+      try {await markDispatched(client, order.id, FILE_COURIER, FILE_TRACKING, ''); onChanged({courier: FILE_COURIER, tracking_id: FILE_TRACKING, tracking_url: ''});}
+      catch (e) {setError(e instanceof Error ? e.message : 'Could not save this. Retry.');}
+      finally {setBusy(false);}
+    };
+    return <div className="dl-block">
+      <OrderProgress order={order}/>
+      {!paid && <p className="offer-note">Confirm the payment from your own UPI app first. Then email the file.</p>}
+      {paid && order.delivery_state === 'none' && <>
+        <p className="offer-note">Email the file to the buyer at <strong>{order.buyer_email}</strong>, the address they gave, from your own email. Then mark it here. The site never holds or sends the file.</p>
+        <p className="pay-actions"><button type="button" className="pay-primary" disabled={busy} onClick={() => void sendFile()}>{busy ? 'Saving...' : 'Mark file as sent'}</button></p>
+      </>}
+      {order.delivery_state === 'dispatched' && <p className="offer-note">File marked as sent. Waiting for the buyer to confirm they received it.</p>}
+      {order.delivery_state === 'delivered' && <p className="offer-note"><strong>The buyer confirmed they received the file.</strong></p>}
+      {error && <p role="alert">{error}</p>}
+    </div>;
+  }
   const showForm = paid && order.delivery_state !== 'delivered' && (order.delivery_state === 'none' || editing);
   return <div className="dl-block">
     <OrderProgress order={order}/>
