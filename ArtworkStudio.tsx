@@ -64,7 +64,7 @@ function OrderRequestRow({client,req,onChanged}:{client:NonNullable<ReturnType<t
  const answer=async(action:'confirm'|'decline')=>{if(busy)return;setBusy(true);setMessage('');try{await respondOrderRequest(client,req.id,action);onChanged();}catch(e){setMessage(e instanceof Error?e.message:'Could not answer this request. Retry when connected.');}finally{setBusy(false);}};
  const confirmed=req.status==='confirmed';
  return <li className="offer-row">
-  <div className="offer-row-top"><strong>₹{(req.amount_inr+req.delivery_fee_inr).toLocaleString('en-IN')}</strong><span className={`offer-status offer-status-${req.status}`}>{orderBadge(req.status,req.delivery_state,req.refund_state)}</span></div>
+  <div className="offer-row-top"><strong>₹{(req.amount_inr+req.delivery_fee_inr).toLocaleString('en-IN')}</strong><span className={`offer-status offer-status-${req.status}`}>{orderBadge(req.status,req.delivery_state,req.refund_state,!!req.buyer_email)}</span></div>
   {req.delivery_fee_inr>0&&<p className="offer-time">₹{req.amount_inr.toLocaleString('en-IN')} + ₹{req.delivery_fee_inr.toLocaleString('en-IN')} delivery</p>}
   {confirmed?<p className="offer-note">{req.buyer_name}{req.buyer_phone?` · ${req.buyer_phone}`:''}{req.buyer_email?` · ${req.buyer_email}`:''}{req.delivery_address?<><br/>{req.delivery_address}{req.delivery_pin?` · ${req.delivery_pin}`:''}</>:null}</p>:<p className="offer-note">{req.first_name}{req.area?` · area ${req.area}`:''}. Full contact details appear after you confirm.</p>}
   <p className="offer-time">{new Date(req.created_at).toLocaleDateString('en-IN')}</p>

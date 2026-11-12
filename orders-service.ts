@@ -119,6 +119,11 @@ export async function respondOrderRequest(client: SupabaseClient, requestId: str
   fail(error);
 }
 
+/* Digital works reuse the same delivery steps: 'dispatched' means the artist emailed the file and 'delivered' means the buyer confirmed it. The artist call stores courier 'Email' and tracking 'FILE-SENT'; no file ever passes through the site. A digital order is the one with a buyer email (backend/008 create_order_request). */
+export const FILE_COURIER = 'Email';
+export const FILE_TRACKING = 'FILE-SENT';
+export const isDigitalOrder = (o: {buyer_email?: string | null}): boolean => !!o.buyer_email;
+
 /* Artist-managed delivery: the artist types the courier and tracking they arranged
    themselves; the buyer marks it received. Nothing here is verified by the site. */
 export async function markDispatched(client: SupabaseClient, requestId: string, courier: string, trackingId: string, trackingUrl: string): Promise<void> {
@@ -156,9 +161,9 @@ export const UPI_ID = /^[A-Za-z0-9._-]{2,64}@[A-Za-z][A-Za-z0-9.-]{1,40}$/;
  * withdrawn or cancelled; once a confirmed order ships, or a cancelled one is
  * being refunded, the badge shows how far it got.
  */
-export function orderBadge(status: string, deliveryState?: string, refundState?: string): string {
-  if (status === 'confirmed' && deliveryState === 'delivered') return 'Delivered';
-  if (status === 'confirmed' && deliveryState === 'dispatched') return 'Dispatched';
+export function orderBadge(status: string, deliveryState?: string, refundState?: string, digital?: boolean): string {
+  if (status === 'confirmed' && deliveryState === 'delivered') return digital ? 'File received' : 'Delivered';
+  if (status === 'confirmed' && deliveryState === 'dispatched') return digital ? 'File sent' : 'Dispatched';
   if (status === 'cancelled') {
     if (refundState === 'requested') return 'Cancel requested';
     if (refundState === 'sent') return 'Refund sent';
