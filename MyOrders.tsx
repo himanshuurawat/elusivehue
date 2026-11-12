@@ -7,6 +7,8 @@ import {artistOrderRequests, orderBadge, type ArtistOrderRequest, type MyOrderRe
 import {respondOrderPayment} from './payment-service';
 import {ArtistDelivery, BuyerDelivery} from './DeliveryParts';
 import {ArtistRefund, BuyerCancel, BuyerRefund} from './RefundParts';
+import {loadAlerts, type AlertItem} from './alerts-service';
+import {useFocusTarget} from './focus-target';
 import './artwork-studio.css';
 
 /*
@@ -74,6 +76,12 @@ export function MyOrders() {
   const [sent, setSent] = useState<Sent[] | null>(null);
   const [received, setReceived] = useState<Received[] | null>(null);
   const [error, setError] = useState('');
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const [alertsComplete, setAlertsComplete] = useState(true);
+  const [alertsTick, setAlertsTick] = useState(0);
+  const [sentFailed, setSentFailed] = useState(false);
+  const [receivedFailed, setReceivedFailed] = useState(false);
+  useFocusTarget();
   const mounted = useRef(true);
 
   useEffect(() => {
@@ -83,11 +91,19 @@ export function MyOrders() {
       if (!mounted.current) return;
       setSession(Boolean(data.session));
       if (!data.session) return;
-      loadSent(client).then(r => mounted.current && setSent(r)).catch(e => {if (mounted.current) {setSent([]); setError(e instanceof Error ? e.message : 'Could not load your requests. Retry when connected.');}});
-      loadReceived(client).then(r => mounted.current && setReceived(r)).catch(() => {if (mounted.current) setReceived([]);});
+      loadSent(client).then(r => mounted.current && setSent(r)).catch(e => {if (mounted.current) {setSent([]); setSentFailed(true); setError(e instanceof Error ? e.message : 'Could not load your requests. Retry when connected.');}});
+      loadReceived(client).then(r => mounted.current && setReceived(r)).catch(() => {if (mounted.current) {setReceived([]); setReceivedFailed(true);}});
     }).catch(() => {if (mounted.current) setSession(false);});
     return () => {mounted.current = false;};
   }, []);
+
+  /* Recheck after the first load and after every change on this page, so resolved actions leave the list. */
+  useEffect(() => {
+    if (!client || session !== true || sent === null || received === null) return;
+    let live = true;
+    loadAlerts(client).then(r => {if (live) {setAlerts(r.items); setAlertsComplete(r.complete);}}).catch(() => {if (live) setAlertsComplete(false);});
+    return () => {live = false;};
+  }, [session, sent, received, alertsTick]);
 
   return <main className="artwork-workspace">
     <header className="workspace-nav"><Link to="/">elusive · hue</Link><Link to="/account">Your account ↗</Link></header>
@@ -97,10 +113,12 @@ export function MyOrders() {
       <p className="workspace-intro">Requests you sent, and requests for your art, in one place. Once the artist confirms, you pay them directly in your UPI app - nothing is charged here.</p>
       {session === false ? <div className="workspace-empty"><p>{client ? 'Sign in to see your order requests.' : 'Orders need the connected account setup.'}</p><Link to="/account">Go to sign in ↗</Link></div> : <>
         {error && <p role="alert">{error}</p>}
+        {!alertsComplete && <p role="status" className="needs-you-warn">Some requests could not be checked just now, so this list may be missing items. <button type="button" className="pay-copy" onClick={() => setAlertsTick(t => t + 1)}>Check again</button></p>}
+        {alerts.length > 0 && <section className="needs-you" aria-label="Needs your action"><p className="selling-kicker">Needs your action ({alerts.length})</p><ul>{alerts.map(a => <li key={a.key}><span className="needs-role">{a.role === 'artist' ? 'As artist' : 'As buyer'}</span> {a.text} <Link to={a.to}>Open ↗</Link></li>)}</ul></section>}
         <div className="orders-lists">
         <section className="selling-offers" aria-label="Requests you sent">
           <p className="selling-kicker">Requests you sent</p>
-          {sent === null ? <WaitOrb label="Loading requests"/> : sent.length === 0 ? <p>You have not sent any order requests yet.</p> : <ul>{sent.map(({req, work}) => <li className="offer-row" key={req.id}>
+          {sent === null ? <WaitOrb label="Loading requests"/> : sent.length === 0 ? (sentFailed ? <p role="alert">Could not load the requests you sent. Reload the page to try again.</p> : <p>You have not sent any order requests yet.</p>) : <ul>{sent.map(({req, work}) => <li className="offer-row" key={req.id} data-focus-id={req.id}>
             <div className="offer-row-top"><strong>{work ? work.title : 'Artwork no longer shared'}</strong><span className={`offer-status offer-status-${req.status}`}>{orderBadge(req.status, req.delivery_state, req.refund_state, !!req.buyer_email)}</span></div>
             <p className="offer-note">{rupees(req.amount_inr + req.delivery_fee_inr)}{req.delivery_fee_inr > 0 ? ` (${rupees(req.amount_inr)} + ${rupees(req.delivery_fee_inr)} delivery)` : ''}{req.status === 'pending' ? ' · waiting for the artist' : req.status === 'confirmed' ? ' · confirmed by the artist' : ''}</p>
             {req.status === 'confirmed' && (req.qr_path_snapshot || req.upi_id_snapshot) && <p className="offer-time">{req.payment_state === 'received' ? 'Payment received by the artist · ' : req.payment_state === 'buyer_marked' ? 'Artist is checking your payment · ' : req.payment_state === 'missing' ? 'Artist could not find the payment yet · ' : ''}<Link to={`/orders/${req.id}/pay`}>Pay artist ↗</Link></p>}
@@ -112,7 +130,7 @@ export function MyOrders() {
         </section>
         <section className="selling-offers" aria-label="Requests for your art">
           <p className="selling-kicker">Requests for your art</p>
-          {received === null ? <WaitOrb label="Loading requests"/> : received.length === 0 ? <p>No one has sent a request for your artworks yet.</p> : <ul>{received.map(({req, title}) => <li className="offer-row" key={req.id}>
+          {received === null ? <WaitOrb label="Loading requests"/> : received.length === 0 ? (receivedFailed ? <p role="alert">Could not load requests for your art. Reload the page to try again.</p> : <p>No one has sent a request for your artworks yet.</p>) : <ul>{received.map(({req, title}) => <li className="offer-row" key={req.id} data-focus-id={req.id}>
             <div className="offer-row-top"><strong>{title}</strong><span className={`offer-status offer-status-${req.status}`}>{orderBadge(req.status, req.delivery_state, req.refund_state, !!req.buyer_email)}</span></div>
             <p className="offer-note">{rupees(req.amount_inr + req.delivery_fee_inr)}{req.delivery_fee_inr > 0 ? ` (${rupees(req.amount_inr)} + ${rupees(req.delivery_fee_inr)} delivery)` : ''} · {req.first_name}{req.area ? ` · area ${req.area}` : ''}{req.status === 'confirmed' ? '. Contact details are on the artwork.' : req.status === 'cancelled' ? '.' : '. Full contact details appear after you confirm.'}</p>
             {req.status === 'confirmed' && req.payment_state === 'buyer_marked' && <p className="offer-note"><strong>{req.first_name} says they paid {rupees(req.amount_inr + req.delivery_fee_inr)}.</strong> Check your own UPI app - a screenshot is never proof.</p>}
