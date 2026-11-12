@@ -787,3 +787,11 @@ a.pub-buy{color:#171b19}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media (prefers-reduced-motion: reduce){.wait-orb{animation:none}}
 .profile-save .wait-orb-inline canvas{filter:brightness(.12) saturate(0)}
+
+/* sold out */
+.pub-soldout{display:flex;box-sizing:border-box;width:100%;flex-direction:column;gap:6px;margin:18px 0 0;padding:16px 18px;border:1px solid #d0d5ab40;border-radius:16px;background:#d0d5ab0f;backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px) saturate(1.2)}
+.pub-soldout strong{font:400 26px Georgia,serif;color:#d0d5ab;letter-spacing:.01em}
+.pub-soldout span{font-size:13px;color:#ece8dfb3;line-height:1.5}
+.pub-soldout-tag{font:italic 400 14px Georgia,serif;color:#d0d5ab;letter-spacing:.02em}
+.pub-work-card:has(.pub-soldout-tag) .pub-work-thumb img{filter:grayscale(.55) brightness(.8)}
+@media (prefers-reduced-motion:no-preference){.pub-soldout{animation:pub-soldout-in .5s ease both}@keyframes pub-soldout-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}}

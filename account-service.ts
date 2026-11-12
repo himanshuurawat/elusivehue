@@ -22,7 +22,7 @@ export function authReturnUrl(recovery=false):string {
 export type Profile={id:string;username:string|null;display_name:string;bio:string};
 export type ProfileFields=Pick<Profile,'username'|'display_name'|'bio'>;
 export type ArtworkFields={title:string;medium:string;format:'Physical'|'Digital';size_class:'Small'|'Medium'|'Large';width:number;height:number;unit:'cm'|'px';asking_price_inr:number;description:string;image_path:string};
-export type Artwork=ArtworkFields & {id:string;owner_id:string;status:'draft'|'published';for_sale:boolean;delivery_fee_inr:number;created_at:string;updated_at:string};
+export type Artwork=ArtworkFields & {id:string;owner_id:string;status:'draft'|'published';for_sale:boolean;sold_out:boolean;delivery_fee_inr:number;created_at:string;updated_at:string};
 export function cleanProfile(p:ProfileFields):ProfileFields {
  const username=(p.username||'').trim();
  if(!/^[a-zA-Z0-9_]{3,24}$/.test(username))throw new Error('Use 3-24 letters, numbers or underscores for your username.');
@@ -71,6 +71,7 @@ export function accountRepository(client:SupabaseClient){
    if(value.length>1000)throw new Error('Keep the description within 1,000 characters.');
    const {data,error}=await client.from('artworks').update({description:value,for_sale:forSale}).eq('id',id).eq('owner_id',uid).select().single();fail(error);return data as Artwork;
   },
+  async setSoldOut(id:string,soldOut:boolean){const uid=await owner();const {data,error}=await client.from('artworks').update({sold_out:soldOut}).eq('id',id).eq('owner_id',uid).select().single();fail(error);return data as Artwork;},
   async setStatus(id:string,status:'draft'|'published'){const uid=await owner();const {data,error}=await client.from('artworks').update({status}).eq('id',id).eq('owner_id',uid).select().single();fail(error);return data as Artwork;},
   async uploadPhoto(file:File){
    const uid=await owner(),extension:Record<string,string>={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
