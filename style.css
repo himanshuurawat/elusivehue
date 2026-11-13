@@ -932,3 +932,7 @@ body { background: #0a0909; }
 
 .alert-nav-link{display:inline-flex;align-items:center;gap:6px;color:#d0d5ab;text-decoration:none}
 .alert-count{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#d0d5ab;color:#0b0b0c;font-size:11px;line-height:18px;text-align:center;font-weight:600}
+.r-soon { text-align: left; }
+.r-soon .soon-pill { border: 1px solid rgba(208,213,171,.45); color: #d0d5ab; border-radius: 999px; padding: 4px 12px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+.r-soon .note { margin-bottom: 0; }
+.r-soon .head { justify-content: flex-start; gap: 16px; }
