@@ -1,5 +1,6 @@
 html, body, #root { margin: 0; min-height: 100%; }
 body { background: #0a0909; }
+body:has(.stage.alt) { background: #f2ece3; }
 
 :root {
     --ds-page: #0a0909;
@@ -272,6 +273,11 @@ body { background: #0a0909; }
 .stage.alt .s-cell .x { background: rgb(242 236 227 / .82); }
 .stage.alt .grain { opacity: .07; }
 .stage.alt { --amber: #d99a12; }
+/* The depth scene is designed dark (standalone .depth-scroll carries #111110); keep its
+   backdrop in the light theme too so its light text, kicker and captions stay readable. */
+.stage.alt .page-depth { background: #111110; }
+/* Phone: the vertical edge strip must start below the sticky pill navigation. */
+@media (max-width: 767px) { .g-hero .vert { top: 84px; } }
 
 /* ---------- resale shelf (personal belongings, dummy data) ---------- */
 .r-sec { max-width: 1160px; margin: 90px auto 0; padding: 0 22px; }
