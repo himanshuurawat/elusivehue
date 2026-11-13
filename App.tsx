@@ -1,7 +1,6 @@
 import React, {useState} from 'react';
-import {Routes, Route, Link} from 'react-router-dom';
+import {Routes, Route, Link, Navigate} from 'react-router-dom';
 const OrderHistory=React.lazy(()=>import('./OrderHistory').then(m=>({default:m.OrderHistory})));
-const ResaleItemPage=React.lazy(()=>import('./ResaleItemPage').then(m=>({default:m.ResaleItemPage})));
 const MyOrders=React.lazy(()=>import('./MyOrders').then(m=>({default:m.MyOrders})));
 const MyArtworks=React.lazy(()=>import('./ArtworkStudio').then(m=>({default:m.MyArtworks})));
 const AccountPage=React.lazy(()=>import('./AccountPage').then(m=>({default:m.AccountPage})));
@@ -11,7 +10,6 @@ const OrderPayPage=React.lazy(()=>import('./OrderPayPage').then(m=>({default:m.O
 const ArtistPage=React.lazy(()=>import('./PublicPages').then(m=>({default:m.ArtistPage})));
 import {slugFor} from './publicSlug';
 import {heroWide,artEmber,artGlitch,artFigure,artVessel,artContour,artCollage} from './artwork';
-import {RESALE_ITEMS} from './resale-items';
 import {revealTheme} from './theme-reveal';
 const DOT = '\u00B7';
 const RU = '\u20B9';
@@ -27,26 +25,12 @@ const works = [
 ];
 
 function ResaleShelf() {
-    return <section className="r-sec">
+    return <section className="r-sec r-soon" aria-labelledby="secondhand-title">
         <div className="head">
-            <h2 className="display rise">The second-hand shelf</h2>
-            <span className="meta">Separate from the art</span>
+            <h2 className="display rise" id="secondhand-title">The second-hand shelf</h2>
+            <span className="soon-pill">Coming soon</span>
         </div>
-        <p className="note rise">Separate from the art: the plan is that anyone can also list personal belongings here: gear, supplies, clothes, collectibles. Items, sellers and prices shown are dummy data for layout only.</p>
-        <div className="r-grid">
-            {RESALE_ITEMS.map((r, i) => (
-                <Link to={`/resale/${r.slug}`} className="r-card-link" key={r.title} aria-label={`View ${r.title}`}>
-                <article className="r-card rise" style={{ animationDelay: `${0.15 + i * 0.1}s` }}>
-                    <div className="ph">
-                        <img src={r.img} alt={r.title} />
-                        <span className="cond">{r.kind}</span>
-                    </div>
-                    <div className="row"><span className="t">{r.title}</span><span className="p">{r.price}</span></div>
-                    <div className="a">Listed by {r.seller}</div>
-                </article>
-                </Link>
-            ))}
-        </div>
+        <p className="note rise">A separate place for personal belongings: gear, supplies, collectibles. It is not open yet. Nothing here is for sale, and there are no listings to order.</p>
     </section>;
 }
 
@@ -439,7 +423,6 @@ function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn
         <nav className="pillnav chosen-nav" aria-label="Gallery navigation">
             <button className="brand-button" type="button" onClick={() => jump('gallery-top')} aria-label="Elusive Hue home"><AnimatedWordmark /></button>
             <button type="button" onClick={() => jump('collection')}>Collection</button>
-            <button type="button" onClick={() => jump('secondhand')}>Resale</button>
             {signedIn&&(alerts>0||!alertState.complete)&&<a href="#/orders" className="alert-nav-link" aria-label={alerts>0?`${alerts} ${alerts===1?'item needs':'items need'} your action${alertState.complete?'':', and some requests could not be checked'}`:'Some requests could not be checked. Open My orders'}>{alerts>0?'Needs you':'Check orders'} <span className="alert-count">{alertLabel}</span></a>}<a href={signedIn?"#/account":"#/account?mode=signup"} className="account-nav-link">{signedIn?'Account':'Sign up'}</a><button type="button" className="themebtn" onClick={e => revealTheme(e.currentTarget, () => setAlt(a => !a))} aria-pressed={alt}>{alt ? 'Dark' : 'Light'}</button>
         </nav>
         <header className="g-hero" id="gallery-top">
@@ -469,8 +452,8 @@ function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn
             </div></div>
         </section>
         <div id="secondhand"><ResaleShelf /></div>
-        <section className="g-section project-note"><p className="kicker">The idea behind Elusive Hue</p><h2 className="display">Room for art.<br />Room for stories.</h2><p>A home for physical artwork and digital editions. A separate shelf for personal belongings is planned, and the two stay distinct.</p><details><summary>What works in this preview?</summary><p>The collection above shows works artists have published. Filter physical and digital pieces, switch the theme and explore the layered scroll scene. The closer-look piece and the second-hand shelf are illustrative samples. Email and Google accounts and editable profiles are available, and signed-in artists can manage their artworks in My artworks.</p></details></section>
-        <footer className="g-foot"><Wordmark /><a className="developer-credit" href="https://github.com/himanshuurawat" target="_blank" rel="noopener noreferrer">Developed by Himanshu Rawat <span aria-hidden="true">↗</span></a><nav aria-label="Legal"><a href="/privacy.html">Privacy policy</a><a href="/terms.html">Terms of use</a></nav><p className="meta">Midnight Gallery / selected direction. The collection shows works published by artists. The closer-look piece and the second-hand shelf are illustrative samples.</p><button className="text-link" type="button" onClick={() => jump('gallery-top')}>Back to the top ↑</button></footer>
+        <section className="g-section project-note"><p className="kicker">The idea behind Elusive Hue</p><h2 className="display">Room for art.<br />Room for stories.</h2><p>A home for physical artwork and digital editions. A separate shelf for personal belongings is planned, and the two stay distinct.</p><details><summary>What works in this preview?</summary><p>The collection above shows works artists have published. Filter physical and digital pieces, switch the theme and explore the layered scroll scene. The closer-look piece is an illustrative sample, and the second-hand shelf is coming soon. Email and Google accounts and editable profiles are available, and signed-in artists can manage their artworks in My artworks.</p></details></section>
+        <footer className="g-foot"><Wordmark /><a className="developer-credit" href="https://github.com/himanshuurawat" target="_blank" rel="noopener noreferrer">Developed by Himanshu Rawat <span aria-hidden="true">↗</span></a><nav aria-label="Legal"><a href="/privacy.html">Privacy policy</a><a href="/terms.html">Terms of use</a></nav><p className="meta">Midnight Gallery / selected direction. The collection shows works published by artists. The closer-look piece is an illustrative sample, and the second-hand shelf is coming soon.</p><button className="text-link" type="button" onClick={() => jump('gallery-top')}>Back to the top ↑</button></footer>
         {listingOpen&&<ArtistListing onClose={()=>setListingOpen(false)}/>}
         <ArtworkPreview work={selected} onClose={() => setSelected(null)} />
     </div>;
@@ -497,5 +480,5 @@ export function App(){
  const loading=<div style={{background:'#0b0b0c',color:'#efeee8',minHeight:'100vh',padding:32}} role="status">Opening your space...</div>;
  const account=<React.Suspense fallback={loading}><AccountPage onGuest={continueAsGuest}/></React.Suspense>;
  const entry=checking?loading:(signedIn||guest?<Gallery signedIn={signedIn}/>:account);
- return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/order-history" element={<React.Suspense fallback={loading}><OrderHistory/></React.Suspense>}/><Route path="/orders" element={<React.Suspense fallback={loading}><MyOrders/></React.Suspense>}/><Route path="/orders/:id/pay" element={<React.Suspense fallback={loading}><OrderPayPage/></React.Suspense>}/><Route path="/resale/:slug" element={<React.Suspense fallback={loading}><ResaleItemPage/></React.Suspense>}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/><Route path="/artwork/:slug" element={<React.Suspense fallback={loading}><ArtworkPage/></React.Suspense>}/><Route path="/artist/:slug" element={<React.Suspense fallback={loading}><ArtistPage/></React.Suspense>}/><Route path="/buy/:slug" element={<React.Suspense fallback={loading}><CheckoutPage/></React.Suspense>}/></Routes>;
+ return <Routes><Route path="/" element={entry}/><Route path="/gallery" element={entry}/><Route path="/account" element={account}/><Route path="/order-history" element={<React.Suspense fallback={loading}><OrderHistory/></React.Suspense>}/><Route path="/orders" element={<React.Suspense fallback={loading}><MyOrders/></React.Suspense>}/><Route path="/orders/:id/pay" element={<React.Suspense fallback={loading}><OrderPayPage/></React.Suspense>}/><Route path="/resale/:slug" element={<Navigate to="/" replace/>}/><Route path="/my-artworks" element={<React.Suspense fallback={loading}><MyArtworks/></React.Suspense>}/><Route path="/artwork/:slug" element={<React.Suspense fallback={loading}><ArtworkPage/></React.Suspense>}/><Route path="/artist/:slug" element={<React.Suspense fallback={loading}><ArtistPage/></React.Suspense>}/><Route path="/buy/:slug" element={<React.Suspense fallback={loading}><CheckoutPage/></React.Suspense>}/></Routes>;
 }
