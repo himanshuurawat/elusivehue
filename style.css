@@ -513,7 +513,7 @@ body:has(.stage.alt) { background: #f2ece3; }
 .unfold-scene.motion-ready { --unfold:0; }
 .unfold-piece { position:absolute; width:43%; max-width:250px; margin:0; left:28.5%; top:70px; transform-origin:50% 95%; transition:transform .32s cubic-bezier(.2,.65,.3,1); }
 .unfold-piece img { width:100%; aspect-ratio:3/4; display:block; object-fit:cover; box-shadow:0 14px 28px #0005; }
-.unfold-piece figcaption { font:8px var(--text); letter-spacing:.12em; text-transform:uppercase; padding-top:14px; color:var(--ink2); }
+.unfold-piece figcaption { font:8px var(--text); letter-spacing:.12em; text-transform:uppercase; padding-top:14px; color:var(--ink2); opacity:clamp(0, calc((var(--unfold) - .55) * 2.5), 1); }
 .unfold-left { z-index:1; transform:translate3d(calc(var(--unfold) * -67%),calc(32px - var(--unfold) * 30px),0) rotate(calc(-4deg - var(--unfold) * 11deg)); }
 .unfold-center { z-index:3; transform:translate3d(0,calc(45px - var(--unfold) * 45px),0) rotate(calc(6deg - var(--unfold) * 6deg)); }
 .unfold-right { z-index:2; transform:translate3d(calc(var(--unfold) * 68%),calc(35px - var(--unfold) * 20px),0) rotate(calc(9deg + var(--unfold) * 7deg)); }
@@ -539,6 +539,12 @@ body:has(.stage.alt) { background: #f2ece3; }
 .page-depth .depth-scene { position:sticky; top:80px; height:540px; }
 .page-depth .depth-bg,.page-depth .depth-halo,.page-depth .depth-title,.page-depth .depth-mid,.page-depth .depth-front,.page-depth .depth-outro { transition:none; }
 .page-depth .depth-hint { opacity:calc(1 - var(--depth) * 5); }
+
+/* Scrolling text must never merge with other text or planes: the plane captions belong
+   to the rest state and fade out early in the scene, and the outro headline rises only
+   after they are gone. The artwork planes keep their full drift; only the labels hand off. */
+.page-depth .depth-mid span, .page-depth .depth-front span { opacity:clamp(0, calc(1 - var(--depth) * 2.5), 1); }
+.page-depth .depth-outro { opacity:clamp(0, calc((var(--depth) - .45) * 2.5), 1); }
 /* One pinned scene reveals the next under its original foreground. */
 .scene-journey { --cross:0; height:calc(760px + 1740px); position:relative; }
 .journey-stage { position:sticky; top:80px; height:760px; overflow:hidden; isolation:isolate; }
