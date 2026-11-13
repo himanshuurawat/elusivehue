@@ -83,6 +83,27 @@ export function MyOrders() {
   const [receivedFailed, setReceivedFailed] = useState(false);
   useFocusTarget();
   const mounted = useRef(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const reloading = useRef(false);
+
+  /* One reload path for first load, the Refresh button and returning to the tab. No background polling.
+     The ref guard collapses the focus + visibilitychange pair that fires together on tab return. */
+  const reload = async () => {
+    if (!client || reloading.current) return;
+    reloading.current = true;
+    setRefreshing(true);
+    try {
+      const [s, r] = await Promise.all([
+        loadSent(client).catch(e => {if (mounted.current) {setSent(prev => prev ?? []); setSentFailed(true); setError(e instanceof Error ? e.message : 'Could not load your requests. Retry when connected.');} return null;}),
+        loadReceived(client).catch(() => {if (mounted.current) {setReceived(prev => prev ?? []); setReceivedFailed(true);} return null;}),
+      ]);
+      if (!mounted.current) return;
+      if (s) {setSent(s); setSentFailed(false); setError('');}
+      if (r) {setReceived(r); setReceivedFailed(false);}
+    } finally {reloading.current = false; if (mounted.current) setRefreshing(false);}
+  };
+  const reloadRef = useRef(reload);
+  reloadRef.current = reload;
 
   useEffect(() => {
     mounted.current = true;
@@ -91,11 +112,19 @@ export function MyOrders() {
       if (!mounted.current) return;
       setSession(Boolean(data.session));
       if (!data.session) return;
-      loadSent(client).then(r => mounted.current && setSent(r)).catch(e => {if (mounted.current) {setSent([]); setSentFailed(true); setError(e instanceof Error ? e.message : 'Could not load your requests. Retry when connected.');}});
-      loadReceived(client).then(r => mounted.current && setReceived(r)).catch(() => {if (mounted.current) {setReceived([]); setReceivedFailed(true);}});
+      void reloadRef.current();
     }).catch(() => {if (mounted.current) setSession(false);});
     return () => {mounted.current = false;};
   }, []);
+
+  /* Fresh data when you come back to this tab. */
+  useEffect(() => {
+    if (!client || session !== true) return;
+    const onVisible = () => {if (document.visibilityState === 'visible') void reloadRef.current();};
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {document.removeEventListener('visibilitychange', onVisible); window.removeEventListener('focus', onVisible);};
+  }, [session]);
 
   /* Recheck after the first load and after every change on this page, so resolved actions leave the list. */
   useEffect(() => {
@@ -111,6 +140,7 @@ export function MyOrders() {
       <p className="kicker">Your orders</p>
       <h1 className="display">My orders.</h1>
       <p className="workspace-intro">Requests you sent, and requests for your art, in one place. Once the artist confirms, you pay them directly in your UPI app - nothing is charged here.</p>
+      {session === true && <div className="workspace-actions"><button disabled={refreshing} onClick={() => void reload()}>{refreshing ? <><WaitOrb inline size={18} label="Refreshing orders"/>Refreshing</> : 'Refresh orders'}</button></div>}
       {session === false ? <div className="workspace-empty"><p>{client ? 'Sign in to see your order requests.' : 'Orders need the connected account setup.'}</p><Link to="/account">Go to sign in ↗</Link></div> : <>
         {error && <p role="alert">{error}</p>}
         {!alertsComplete && <p role="status" className="needs-you-warn">Some requests could not be checked just now, so this list may be missing items. <button type="button" className="pay-copy" onClick={() => setAlertsTick(t => t + 1)}>Check again</button></p>}
