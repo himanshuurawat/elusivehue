@@ -218,6 +218,15 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
         if(!work && dialog.current?.open)dialog.current.close();
     },[work]);
     React.useEffect(() => {
+        if(!work)return;
+        const root=document.documentElement;
+        const gap=window.innerWidth-root.clientWidth;
+        const prevOverflow=root.style.overflow,prevPad=root.style.paddingRight;
+        root.style.overflow='hidden';
+        if(gap>0)root.style.paddingRight=`${gap}px`;
+        return()=>{root.style.overflow=prevOverflow;root.style.paddingRight=prevPad;};
+    },[work]);
+    React.useEffect(() => {
         if(!work || !dialog.current)return;
         const root=dialog.current;
         const observer=new IntersectionObserver(entries=>entries.forEach(entry=>entry.target.classList.toggle('chapter-visible',entry.isIntersecting)),{root,threshold:.16});
