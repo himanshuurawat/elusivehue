@@ -11,6 +11,7 @@ const ArtistPage=React.lazy(()=>import('./PublicPages').then(m=>({default:m.Arti
 import {slugFor} from './publicSlug';
 import {heroWide,artEmber,artGlitch,artFigure,artVessel,artContour,artCollage} from './artwork';
 import {revealTheme} from './theme-reveal';
+import {GallerySearch} from './search';
 const DOT = '\u00B7';
 const RU = '\u20B9';
 
@@ -423,6 +424,7 @@ function Gallery({ still = false, signedIn = false }: { still?: boolean;signedIn
         <nav className="pillnav chosen-nav" aria-label="Gallery navigation">
             <button className="brand-button" type="button" onClick={() => jump('gallery-top')} aria-label="Elusive Hue home"><AnimatedWordmark /></button>
             <button type="button" onClick={() => jump('collection')}>Collection</button>
+            <GallerySearch />
             {signedIn&&(alerts>0||!alertState.complete)&&<a href="#/orders" className="alert-nav-link" aria-label={alerts>0?`${alerts} ${alerts===1?'item needs':'items need'} your action${alertState.complete?'':', and some requests could not be checked'}`:'Some requests could not be checked. Open My orders'}>{alerts>0?'Needs you':'Check orders'} <span className="alert-count">{alertLabel}</span></a>}<a href={signedIn?"#/account":"#/account?mode=signup"} className="account-nav-link">{signedIn?'Account':'Sign up'}</a><button type="button" className="themebtn" onClick={e => revealTheme(e.currentTarget, () => setAlt(a => !a))} aria-pressed={alt}>{alt ? 'Dark' : 'Light'}</button>
         </nav>
         <header className="g-hero" id="gallery-top">
