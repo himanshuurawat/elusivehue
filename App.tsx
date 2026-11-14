@@ -220,11 +220,17 @@ function ArtworkPreview({work, onClose}: {work: typeof works[number] | null; onC
     React.useEffect(() => {
         if(!work)return;
         const root=document.documentElement;
-        const gap=window.innerWidth-root.clientWidth;
-        const prevOverflow=root.style.overflow,prevPad=root.style.paddingRight;
-        root.style.overflow='hidden';
-        if(gap>0)root.style.paddingRight=`${gap}px`;
-        return()=>{root.style.overflow=prevOverflow;root.style.paddingRight=prevPad;};
+        const stage=dialog.current?.closest<HTMLElement>('.chosen-gallery');
+        const elements=stage?[root,stage]:[root];
+        const restore=elements.map(el=>{
+            const overflow=el.style.overflow,paddingRight=el.style.paddingRight;
+            const gap=el===root?window.innerWidth-root.clientWidth:el.offsetWidth-el.clientWidth;
+            const padding=parseFloat(getComputedStyle(el).paddingRight)||0;
+            el.style.overflow='hidden';
+            if(gap>0)el.style.paddingRight=`${padding+gap}px`;
+            return()=>{el.style.overflow=overflow;el.style.paddingRight=paddingRight;};
+        });
+        return()=>restore.forEach(reset=>reset());
     },[work]);
     React.useEffect(() => {
         if(!work || !dialog.current)return;
