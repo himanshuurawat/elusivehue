@@ -132,3 +132,5 @@ export async function loadPublishedGallery(
   const byPath = new Map((signed ?? []).map(s => [s.path ?? '', s.signedUrl]));
   return {items: works.map(work => ({work, photo: byPath.get(work.image_path) ?? ''})), total: count ?? works.length};
 }
+
+export {searchPublic, type SearchResults} from './public-search';
